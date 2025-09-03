@@ -1,0 +1,205 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Eternal Hunt – Telegram Web App</title>
+  <!-- Telegram Mini App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #0b0b12;
+      --card: #141422;
+      --text: #e6e6f0;
+      --muted: #9aa0a6;
+      --accent: #ff3b5c; /* Blood Moon */
+      --soft: rgba(255,59,92,0.2);
+      --ok: #2ecc71;
+      --warn: #f39c12;
+    }
+    * { box-sizing: border-box }
+    html, body { height: 100% }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(1200px 600px at 80% -10%, rgba(255,59,92,0.08), transparent 60%), var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 780px; margin: 0 auto; padding: 20px; }
+    header { display:flex; align-items:center; gap:12px; margin: 6px 0 18px; }
+    header img { width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.35) }
+    h1 { font-size: 22px; margin: 0; letter-spacing: .3px }
+    p.muted { color: var(--muted); margin: 6px 0 0 }.grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px }
+.card { background: linear-gradient(180deg, rgba(255,59,92,.06), transparent), var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25) }
+.stat { display:flex; align-items:center; justify-content:space-between; margin: 6px 0; font-weight: 600 }
+.bar { height: 8px; background: rgba(255,255,255,.06); border-radius: 999px; overflow:hidden }
+.bar > span { display:block; height: 100%; background: linear-gradient(90deg, var(--soft), var(--accent)); width: 30% }
+
+.buttons { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 10px }
+button { appearance:none; border: 1px solid rgba(255,255,255,.08); background: #1a1a2b; color: var(--text); padding: 12px 14px; border-radius: 14px; font-weight: 700; letter-spacing:.2px; cursor:pointer; box-shadow: 0 6px 16px rgba(0,0,0,.25) }
+button.primary { background: var(--accent); color: #09090e; border-color: transparent }
+button:active { transform: translateY(1px) }
+
+.log { margin-top: 14px; padding: 12px; border-radius: 12px; background: #10101a; color: #d9d9e3; border:1px solid rgba(255,255,255,.06); min-height: 56px; white-space: pre-line }
+
+footer { margin: 18px 0 10px; display:flex; gap:10px; flex-wrap:wrap }
+footer .right { margin-left: auto; display:flex; gap:10px }
+.chip { font-size: 12px; padding:6px 10px; border-radius:999px; background: rgba(255,59,92,.12); border:1px solid rgba(255,59,92,.35); color: #ffdbe3 }
+.row { display:flex; gap:10px; align-items:center }
+.hidden { display:none }
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img id="avatar" alt="Wolf" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff3b5c' d='M21 3l-3 1l-2-2l-2 2l-2-2l-2 2l-2-2l-2 2L3 3l1 3l-2 2l2 2l-2 2l2 2l-1 3l3-1l2 2l2-2l2 2l2-2l2 2l2-2l3 1l-1-3l2-2l-2-2l2-2l-2-2z'/%3E%3C/svg%3E"/>
+      <div>
+        <h1>🐺 Eternal Hunt</h1>
+        <p class="muted">Telegram Mini App • Blood Moon Alpha</p>
+      </div>
+    </header><div class="grid">
+  <section class="card">
+    <div class="stat"><span>Hunter</span><span id="username">—</span></div>
+    <div class="stat"><span>Level</span><span id="level">1</span></div>
+    <div class="stat"><span>Strength</span><span id="strength">1</span></div>
+    <div class="stat"><span>$PREY</span><span id="prey">0</span></div>
+    <div class="bar" aria-hidden="true"><span id="xpbar"></span></div>
+    <div class="buttons">
+      <button id="huntBtn" class="primary">Hunt</button>
+      <button id="trainBtn">Train</button>
+      <button id="profileBtn">Profile</button>
+    </div>
+    <div class="log" id="log">Ready.</div>
+  </section>
+
+  <section class="card">
+    <div class="row"><strong>Role</strong>
+      <select id="roleSel">
+        <option value="wolf">Wolf 🐺</option>
+        <option value="hunter">Hunter 🏹</option>
+        <option value="spirit">Spirit 👻</option>
+      </select>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="resetBtn">Reset (local)</button>
+      <span class="chip">Prototype – no server yet</span>
+    </div>
+    <div style="margin-top:10px" class="muted">Tip: tap the Telegram Main Button to send the last action to the bot.</div>
+  </section>
+</div>
+
+<footer>
+  <span class="chip">Eternal Hunt ✦ Blood Moon</span>
+  <div class="right">
+    <span class="chip" id="envChip">Browser</span>
+  </div>
+</footer>
+
+  </div>  <script>
+    // --- Helpers ------------------------------------------------------------
+    const tg = window.Telegram?.WebApp;
+    const isTG = !!tg;
+
+    const $ = (sel) => document.querySelector(sel);
+    const store = {
+      get() { try { return JSON.parse(localStorage.getItem('eh_player')||'null') } catch(_) { return null } },
+      set(v) { localStorage.setItem('eh_player', JSON.stringify(v)) },
+      clear() { localStorage.removeItem('eh_player') }
+    };
+
+    function initPlayer(name) {
+      const saved = store.get();
+      if (saved) return saved;
+      const p = { name, level: 1, strength: 1, prey: 0, role: 'wolf', xp: 0 };
+      store.set(p); return p;
+    }
+
+    function render(p) {
+      $('#username').textContent = p.name || '—';
+      $('#level').textContent = p.level;
+      $('#strength').textContent = p.strength;
+      $('#prey').textContent = p.prey;
+      $('#roleSel').value = p.role;
+      $('#xpbar').style.width = Math.min(100, (p.xp%100)) + '%';
+    }
+
+    function log(msg) {
+      const el = $('#log');
+      el.textContent = msg;
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    }
+
+    function rand(min, max) { return Math.floor(Math.random()*(max-min+1))+min }
+
+    // --- Telegram Integration ---------------------------------------------
+    if (isTG) {
+      tg.expand();
+      tg.ready();
+      tg.MainButton.setText('Send to Bot').hide(); // shown after an action
+      $('#envChip').textContent = 'Telegram';
+
+      const u = tg.initDataUnsafe?.user;
+      if (u?.photo_url) $('#avatar').src = u.photo_url;
+    }
+
+    // --- Game State --------------------------------------------------------
+    let player = initPlayer(isTG ? (tg.initDataUnsafe?.user?.first_name || 'Hunter') : 'Browser Wolf');
+    render(player);
+
+    // --- UI Actions --------------------------------------------------------
+    $('#roleSel').addEventListener('change', (e) => {
+      player.role = e.target.value; store.set(player); render(player); log(`Role set to ${player.role}.`)
+      if (isTG) tg.MainButton.show();
+    });
+
+    $('#huntBtn').addEventListener('click', () => {
+      const base = rand(1,10) * player.strength;
+      const bonus = player.role === 'wolf' ? Math.ceil(base*0.2) : 0;
+      const gained = base + bonus;
+      player.prey += gained; player.xp += 12;
+      if (player.xp >= player.level*100) { player.level++; log(`Level up! You are now level ${player.level}.`); }
+      store.set(player); render(player);
+      const text = `You hunted and caught ${gained} prey (bonus ${bonus}). Total $PREY: ${player.prey}.`;
+      log(text);
+      if (isTG) { tg.MainButton.show(); tg.MainButton.onClick(() => sendAction('hunt', { gained, bonus })); }
+    });
+
+    $('#trainBtn').addEventListener('click', () => {
+      if (player.prey >= 20) { player.prey -= 20; player.strength += 1; player.xp += 8; store.set(player); render(player); log(`Training complete! Strength is now ${player.strength}.`) }
+      else { log('Not enough $PREY to train. You need 20.') }
+      if (isTG) { tg.MainButton.show(); tg.MainButton.onClick(() => sendAction('train', {})); }
+    });
+
+    $('#profileBtn').addEventListener('click', () => {
+      log(`Profile → L${player.level} STR${player.strength} • $PREY ${player.prey} • Role ${player.role}`);
+      if (isTG) { tg.MainButton.show(); tg.MainButton.onClick(() => sendAction('profile', {})); }
+    });
+
+    $('#resetBtn').addEventListener('click', () => {
+      store.clear(); player = initPlayer(player.name); render(player); log('Local data reset.');
+      if (isTG) tg.MainButton.hide();
+    });
+
+    // Send the last action back to the bot
+    function sendAction(type, extra) {
+      if (!isTG) { alert('Open in Telegram to send data to the bot.'); return }
+      const payload = {
+        _type: 'eternal_hunt_action',
+        action: type,
+        player,
+        extra,
+        ts: Date.now()
+      };
+      tg.sendData(JSON.stringify(payload));
+      tg.HapticFeedback?.notificationOccurred('success');
+      tg.MainButton.hide();
+      log('Action sent to bot.');
+    }
+
+    // Allow basic browser testing without Telegram
+    if (!isTG) {
+      console.warn('Running outside Telegram. Using local demo mode.');
+    }
+  </script></body>
+</html>

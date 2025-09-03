@@ -4,202 +4,290 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Eternal Hunt – Telegram Web App</title>
-  <!-- Telegram Mini App SDK -->
+  <title>Eternal Hunt – Telegram Web App (Expanded)</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    :root {
-      --bg: #0b0b12;
-      --card: #141422;
-      --text: #e6e6f0;
-      --muted: #9aa0a6;
-      --accent: #ff3b5c; /* Blood Moon */
-      --soft: rgba(255,59,92,0.2);
-      --ok: #2ecc71;
-      --warn: #f39c12;
-    }
-    * { box-sizing: border-box }
-    html, body { height: 100% }
-    body {
-      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(1200px 600px at 80% -10%, rgba(255,59,92,0.08), transparent 60%), var(--bg);
-      color: var(--text);
-    }
-    .wrap { max-width: 780px; margin: 0 auto; padding: 20px; }
-    header { display:flex; align-items:center; gap:12px; margin: 6px 0 18px; }
-    header img { width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.35) }
-    h1 { font-size: 22px; margin: 0; letter-spacing: .3px }
-    p.muted { color: var(--muted); margin: 6px 0 0 }.grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px }
-.card { background: linear-gradient(180deg, rgba(255,59,92,.06), transparent), var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25) }
-.stat { display:flex; align-items:center; justify-content:space-between; margin: 6px 0; font-weight: 600 }
-.bar { height: 8px; background: rgba(255,255,255,.06); border-radius: 999px; overflow:hidden }
-.bar > span { display:block; height: 100%; background: linear-gradient(90deg, var(--soft), var(--accent)); width: 30% }
+    :root{--bg:#07060a;--card:#0f1116;--muted:#9aa0a6;--text:#e9e9f1;--accent:#ff3b5c;--soft:rgba(255,59,92,0.14);--pos:#2ecc71;--warn:#f39c12}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{background:radial-gradient(1200px 600px at 75% -15%, rgba(255,59,92,0.06), transparent 50%), linear-gradient(180deg,#040306,#0b0b12);color:var(--text);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:980px;margin:18px auto;padding:18px}
+    header{display:flex;gap:14px;align-items:center}
+    header img{width:56px;height:56px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+    h1{font-size:20px;margin:0}
+    p.muted{color:var(--muted);margin:0}.grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:14px}
+.card{background:linear-gradient(180deg, rgba(255,59,92,.03), transparent), var(--card);border:1px solid rgba(255,255,255,.04);padding:14px;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
 
-.buttons { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 10px }
-button { appearance:none; border: 1px solid rgba(255,255,255,.08); background: #1a1a2b; color: var(--text); padding: 12px 14px; border-radius: 14px; font-weight: 700; letter-spacing:.2px; cursor:pointer; box-shadow: 0 6px 16px rgba(0,0,0,.25) }
-button.primary { background: var(--accent); color: #09090e; border-color: transparent }
-button:active { transform: translateY(1px) }
+.stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stat{background:rgba(255,255,255,.02);padding:8px 10px;border-radius:10px;font-weight:700}
 
-.log { margin-top: 14px; padding: 12px; border-radius: 12px; background: #10101a; color: #d9d9e3; border:1px solid rgba(255,255,255,.06); min-height: 56px; white-space: pre-line }
+.controls{display:flex;gap:10px;margin-top:12px}
+button{cursor:pointer;border:1px solid rgba(255,255,255,.06);background:#11121a;color:var(--text);padding:10px 12px;border-radius:12px;font-weight:700}
+button.primary{background:linear-gradient(90deg,var(--accent),#ff6b7f);border:none;color:#06060a}
 
-footer { margin: 18px 0 10px; display:flex; gap:10px; flex-wrap:wrap }
-footer .right { margin-left: auto; display:flex; gap:10px }
-.chip { font-size: 12px; padding:6px 10px; border-radius:999px; background: rgba(255,59,92,.12); border:1px solid rgba(255,59,92,.35); color: #ffdbe3 }
-.row { display:flex; gap:10px; align-items:center }
-.hidden { display:none }
+.log{margin-top:12px;background:#0b0b12;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.03);min-height:72px;white-space:pre-wrap}
+
+/* Right column items */
+.section{margin-bottom:12px}
+.label{font-size:13px;color:var(--muted);margin-bottom:6px}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,.02)}
+
+/* PvP modal */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,.6),rgba(0,0,0,.8));z-index:60}
+.modal.open{display:flex}
+.modal .box{width:92%;max-width:720px;background:var(--card);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,.04)}
+.battle-line{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+/* inventory/shop */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.small{font-size:13px;color:var(--muted)}
+
+footer{margin-top:16px;display:flex;gap:8px;align-items:center}
+.chip{padding:6px 10px;border-radius:999px;background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.12);font-weight:700}
+
+@media (max-width:880px){.grid{grid-template-columns:1fr}.wrap{padding:12px}}
 
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <img id="avatar" alt="Wolf" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff3b5c' d='M21 3l-3 1l-2-2l-2 2l-2-2l-2 2l-2-2l-2 2L3 3l1 3l-2 2l2 2l-2 2l2 2l-1 3l3-1l2 2l2-2l2 2l2-2l2 2l2-2l3 1l-1-3l2-2l-2-2l2-2l-2-2z'/%3E%3C/svg%3E"/>
+      <img id="avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff3b5c' d='M21 3l-3 1l-2-2l-2 2l-2-2l-2 2l-2-2l-2 2L3 3l1 3l-2 2l2 2l-2 2l2 2l-1 3l3-1l2 2l2-2l2 2l2-2l2 2l2-2l3 1l-1-3l2-2l-2-2l2-2l-2-2z'/%3E%3C/svg%3E" alt="wolf"/>
       <div>
-        <h1>🐺 Eternal Hunt</h1>
-        <p class="muted">Telegram Mini App • Blood Moon Alpha</p>
+        <h1>🐺 Eternal Hunt — Blood Moon Alpha</h1>
+        <p class="muted">Expanded Web App — Hunt, PvP, Inventory & Shop (no backend required)</p>
       </div>
     </header><div class="grid">
-  <section class="card">
-    <div class="stat"><span>Hunter</span><span id="username">—</span></div>
-    <div class="stat"><span>Level</span><span id="level">1</span></div>
-    <div class="stat"><span>Strength</span><span id="strength">1</span></div>
-    <div class="stat"><span>$PREY</span><span id="prey">0</span></div>
-    <div class="bar" aria-hidden="true"><span id="xpbar"></span></div>
-    <div class="buttons">
-      <button id="huntBtn" class="primary">Hunt</button>
-      <button id="trainBtn">Train</button>
-      <button id="profileBtn">Profile</button>
+  <div class="card">
+    <div class="stats">
+      <div class="stat">Name: <span id="username">—</span></div>
+      <div class="stat">L<span id="level">1</span></div>
+      <div class="stat">STR <span id="strength">1</span></div>
+      <div class="stat">$PREY <span id="prey">0</span></div>
+      <div class="stat">Role <span id="roleTag">Wolf</span></div>
     </div>
-    <div class="log" id="log">Ready.</div>
-  </section>
 
-  <section class="card">
-    <div class="row"><strong>Role</strong>
-      <select id="roleSel">
-        <option value="wolf">Wolf 🐺</option>
-        <option value="hunter">Hunter 🏹</option>
-        <option value="spirit">Spirit 👻</option>
-      </select>
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button id="huntBtn" class="primary">Hunt</button>
+      <button id="trainBtn">Train (20 $PREY)</button>
+      <button id="pvpBtn">Quick PvP</button>
+      <button id="questsBtn">Quests</button>
+      <div style="margin-left:auto" class="small">Mode: <span id="modeTag">Local Demo</span></div>
     </div>
-    <div class="row" style="margin-top:10px">
-      <button id="resetBtn">Reset (local)</button>
-      <span class="chip">Prototype – no server yet</span>
+
+    <div class="log" id="log">Ready. Try Hunt to collect $PREY. Click Quick PvP to battle another hunter (simulated).</div>
+
+    <div style="margin-top:12px" class="grid-2">
+      <div class="card small">
+        <div class="small"><strong>Inventory</strong></div>
+        <div id="inventoryList" style="margin-top:10px"></div>
+      </div>
+      <div class="card small">
+        <div class="small"><strong>Shop</strong></div>
+        <div style="margin-top:10px" id="shopList"></div>
+      </div>
     </div>
-    <div style="margin-top:10px" class="muted">Tip: tap the Telegram Main Button to send the last action to the bot.</div>
-  </section>
+  </div>
+
+  <aside class="card">
+    <div class="section">
+      <div class="label">Player Actions</div>
+      <div class="list">
+        <div class="item"><div>Profile</div><div><button id="profileBtn">View</button></div></div>
+        <div class="item"><div>Reset Local</div><div><button id="resetBtn">Reset</button></div></div>
+        <div class="item"><div>Export Save</div><div><button id="exportBtn">Export</button></div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="label">Leaderboards (local)</div>
+      <div id="leaderboard" class="list small"></div>
+    </div>
+
+    <div class="section">
+      <div class="label">Settings</div>
+      <div style="display:flex;gap:8px;align-items:center"><select id="roleSel"><option value="wolf">Wolf</option><option value="hunter">Hunter</option><option value="spirit">Spirit</option></select><div style="margin-left:auto" class="chip">Prototype</div></div>
+    </div>
+  </aside>
 </div>
 
 <footer>
-  <span class="chip">Eternal Hunt ✦ Blood Moon</span>
-  <div class="right">
-    <span class="chip" id="envChip">Browser</span>
-  </div>
+  <div class="chip">Eternal Hunt • Alpha</div>
+  <div style="margin-left:auto" class="small">Open inside Telegram for WebApp features (Main Button & sendData).</div>
 </footer>
 
+  </div>  <!-- PvP Modal -->  <div id="pvpModal" class="modal" aria-hidden="true">
+    <div class="box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong>Quick PvP Match</strong><button id="closePvp">Close</button></div>
+      <div class="battle-line">
+        <div style="flex:1;padding-right:10px">
+          <div class="small">You</div>
+          <div style="font-weight:800;font-size:18px" id="p1Name">—</div>
+          <div class="small">STR <span id="p1Str">1</span> • L<span id="p1Lvl">1</span></div>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,.03);height:72px"></div>
+        <div style="flex:1;padding-left:10px;text-align:right">
+          <div class="small">Opponent</div>
+          <div style="font-weight:800;font-size:18px" id="p2Name">—</div>
+          <div class="small">STR <span id="p2Str">1</span> • L<span id="p2Lvl">1</span></div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px"><button id="fightBtn" class="primary">Fight</button><button id="cancelFight">Cancel</button></div>
+      <div id="battleLog" class="log" style="margin-top:12px"></div>
+    </div>
   </div>  <script>
-    // --- Helpers ------------------------------------------------------------
+    // Expanded client-side Web App for Eternal Hunt
     const tg = window.Telegram?.WebApp;
     const isTG = !!tg;
+    if (isTG){ tg.expand(); tg.ready(); }
 
-    const $ = (sel) => document.querySelector(sel);
-    const store = {
-      get() { try { return JSON.parse(localStorage.getItem('eh_player')||'null') } catch(_) { return null } },
-      set(v) { localStorage.setItem('eh_player', JSON.stringify(v)) },
-      clear() { localStorage.removeItem('eh_player') }
-    };
+    // Local storage helper
+    const KEY = 'eh_player_v2';
+    function load(){ try { return JSON.parse(localStorage.getItem(KEY)) } catch(e){ return null } }
+    function save(p){ localStorage.setItem(KEY, JSON.stringify(p)) }
+    function clearSave(){ localStorage.removeItem(KEY) }
 
-    function initPlayer(name) {
-      const saved = store.get();
-      if (saved) return saved;
-      const p = { name, level: 1, strength: 1, prey: 0, role: 'wolf', xp: 0 };
-      store.set(p); return p;
+    // Default player
+    let player = load() || { name: isTG ? (tg.initDataUnsafe?.user?.first_name||'Hunter') : 'DemoWolf', telegram_id: isTG ? (tg.initDataUnsafe?.user?.id||null) : null, level:1, strength:1, prey:0, xp:0, role:'wolf', inv:[], lastActions:[] };
+
+    // UI refs
+    const $ = s=>document.querySelector(s);
+    function render(){
+      $('#username').textContent = player.name;
+      $('#level').textContent = player.level;
+      $('#strength').textContent = player.strength;
+      $('#prey').textContent = player.prey;
+      $('#roleTag').textContent = capitalize(player.role);
+      $('#modeTag').textContent = isTG ? 'Telegram WebApp' : 'Local Demo';
+      renderInventory(); renderShop(); renderLeaderboard();
     }
 
-    function render(p) {
-      $('#username').textContent = p.name || '—';
-      $('#level').textContent = p.level;
-      $('#strength').textContent = p.strength;
-      $('#prey').textContent = p.prey;
-      $('#roleSel').value = p.role;
-      $('#xpbar').style.width = Math.min(100, (p.xp%100)) + '%';
+    function log(msg){ $('#log').textContent = msg; }
+
+    function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1) }
+
+    // Simple RNG / server mode
+    // If you host an API, set BACKEND_URL to your endpoint and the client will POST actions to /api/action
+    const BACKEND_URL = null; // e.g. 'https://yourdomain.com/api/action'
+
+    async function postAction(action, extra={}){
+      const payload = { _type:'eternal_hunt_action', action, player:{telegram_id: player.telegram_id, name: player.name}, extra };
+      // If BACKEND_URL is set, POST to server
+      if (BACKEND_URL){
+        try{
+          const res = await fetch(BACKEND_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+          return await res.json();
+        }catch(e){ console.error('API error', e); return {error:true, message:e.message} }
+      }
+      // Otherwise, emulate server response locally
+      return { ok:true, result: localApply(action, extra) };
     }
 
-    function log(msg) {
-      const el = $('#log');
-      el.textContent = msg;
-      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    // Local server-side logic (for demo mode)
+    function localApply(action, extra){
+      if (action==='hunt'){
+        const base = rand(2,9) * player.strength;
+        const bonus = player.role==='wolf' ? Math.ceil(base*0.15) : 0;
+        const gained = base + bonus;
+        player.prey += gained; player.xp += 12;
+        player.lastActions.push({action:'hunt', gained, ts:Date.now()});
+        while(player.xp >= player.level*100){ player.xp -= player.level*100; player.level++; }
+        save(player); return {gained, bonus, prey:player.prey, level:player.level}
+      }
+      if(action==='train'){
+        if (player.prey >=20){ player.prey -=20; player.strength +=1; player.xp +=6; save(player); return {ok:true, prey:player.prey, strength:player.strength} }
+        return {ok:false, reason:'Not enough $PREY'}
+      }
+      if(action==='pvp'){
+        // Simulate an opponent
+        const opp = { name:'Rival'+rand(10,99), level: Math.max(1, player.level+rand(-1,1)), strength: Math.max(1, player.strength+rand(-1,2)) };
+        const pRoll = rand(1,20) + player.strength;
+        const oRoll = rand(1,20) + opp.strength;
+        const dmg = Math.max(1, Math.abs(pRoll - oRoll));
+        let winner = pRoll>=oRoll ? 'player' : 'opponent';
+        if (winner==='player'){ player.prey += Math.ceil(dmg*2); player.xp += 18 } else { player.prey = Math.max(0, player.prey - Math.ceil(dmg)); }
+        while(player.xp >= player.level*100){ player.xp -= player.level*100; player.level++; }
+        save(player);
+        return {winner, opponent:opp, prey:player.prey, dmg}
+      }
+      return {ok:false}
     }
 
-    function rand(min, max) { return Math.floor(Math.random()*(max-min+1))+min }
-
-    // --- Telegram Integration ---------------------------------------------
-    if (isTG) {
-      tg.expand();
-      tg.ready();
-      tg.MainButton.setText('Send to Bot').hide(); // shown after an action
-      $('#envChip').textContent = 'Telegram';
-
-      const u = tg.initDataUnsafe?.user;
-      if (u?.photo_url) $('#avatar').src = u.photo_url;
-    }
-
-    // --- Game State --------------------------------------------------------
-    let player = initPlayer(isTG ? (tg.initDataUnsafe?.user?.first_name || 'Hunter') : 'Browser Wolf');
-    render(player);
-
-    // --- UI Actions --------------------------------------------------------
-    $('#roleSel').addEventListener('change', (e) => {
-      player.role = e.target.value; store.set(player); render(player); log(`Role set to ${player.role}.`)
-      if (isTG) tg.MainButton.show();
+    // Actions
+    $('#huntBtn').addEventListener('click', async ()=>{
+      $('#huntBtn').disabled = true; log('Hunting...');
+      const res = await postAction('hunt');
+      if(res.error){ log('Error: '+res.message) } else {
+        const r = res.result || res;
+        log(`You hunted and gained ${r.gained} prey (bonus ${r.bonus || 0}). Total $PREY: ${r.prey}`);
+        if (isTG) showMainButtonWithData({action:'hunt', gained:r.gained});
+      }
+      $('#huntBtn').disabled = false; render();
     });
 
-    $('#huntBtn').addEventListener('click', () => {
-      const base = rand(1,10) * player.strength;
-      const bonus = player.role === 'wolf' ? Math.ceil(base*0.2) : 0;
-      const gained = base + bonus;
-      player.prey += gained; player.xp += 12;
-      if (player.xp >= player.level*100) { player.level++; log(`Level up! You are now level ${player.level}.`); }
-      store.set(player); render(player);
-      const text = `You hunted and caught ${gained} prey (bonus ${bonus}). Total $PREY: ${player.prey}.`;
-      log(text);
-      if (isTG) { tg.MainButton.show(); tg.MainButton.onClick(() => sendAction('hunt', { gained, bonus })); }
+    $('#trainBtn').addEventListener('click', async ()=>{
+      $('#trainBtn').disabled = true; log('Training...');
+      const res = await postAction('train');
+      if(res.error) log('Error: '+res.message); else {
+        const r = res.result || res;
+        if(r.ok===false) log(r.reason || 'Could not train.'); else log(`Training done. STR is now ${r.strength}. $PREY: ${r.prey}`);
+        if (isTG) showMainButtonWithData({action:'train'});
+      }
+      $('#trainBtn').disabled = false; render();
     });
 
-    $('#trainBtn').addEventListener('click', () => {
-      if (player.prey >= 20) { player.prey -= 20; player.strength += 1; player.xp += 8; store.set(player); render(player); log(`Training complete! Strength is now ${player.strength}.`) }
-      else { log('Not enough $PREY to train. You need 20.') }
-      if (isTG) { tg.MainButton.show(); tg.MainButton.onClick(() => sendAction('train', {})); }
+    $('#profileBtn').addEventListener('click', ()=>{ log(`Profile → L${player.level} STR${player.strength} • $PREY ${player.prey} • Role ${player.role}`) });
+
+    // PvP flow
+    $('#pvpBtn').addEventListener('click', ()=>{
+      $('#pvpModal').classList.add('open'); $('#p1Name').textContent = player.name; $('#p1Str').textContent = player.strength; $('#p1Lvl').textContent = player.level; $('#p2Name').textContent = '—'; $('#p2Str').textContent='?'; $('#p2Lvl').textContent='?'; $('#battleLog').textContent='Ready to match...';
+    });
+    $('#closePvp').addEventListener('click', ()=>$('#pvpModal').classList.remove('open'));
+    $('#cancelFight').addEventListener('click', ()=>$('#pvpModal').classList.remove('open'));
+    $('#fightBtn').addEventListener('click', async ()=>{
+      $('#fightBtn').disabled = true; $('#battleLog').textContent='Matching and fighting...';
+      const res = await postAction('pvp');
+      const r = res.result || res;
+      if(r.winner==='player') $('#battleLog').textContent = `Victory! You won ${Math.ceil(r.dmg*2)} $PREY. Opponent: ${r.opponent.name}`; else $('#battleLog').textContent = `Defeat… You lost ${Math.ceil(r.dmg)} $PREY. Opponent: ${r.opponent.name}`;
+      render(); $('#fightBtn').disabled = false;
     });
 
-    $('#profileBtn').addEventListener('click', () => {
-      log(`Profile → L${player.level} STR${player.strength} • $PREY ${player.prey} • Role ${player.role}`);
-      if (isTG) { tg.MainButton.show(); tg.MainButton.onClick(() => sendAction('profile', {})); }
-    });
+    // Inventory and Shop (client-side only)
+    function renderInventory(){ const el = $('#inventoryList'); el.innerHTML=''; if(player.inv.length===0) el.textContent='Empty'; else player.inv.forEach(i=>{ const d=document.createElement('div'); d.textContent=`${i.name} x${i.qty}`; el.appendChild(d) }) }
+    const SHOP = [ {id:'potion',name:'Strength Potion',cost:30,desc:'+1 STR temporary'}, {id:'shroud',name:'Shadow Shroud',cost:120,desc:'+10% hunt bonus'} ];
+    function renderShop(){ const el = $('#shopList'); el.innerHTML=''; SHOP.forEach(s=>{ const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.marginBottom='8px'; row.innerHTML = `<div><div style="font-weight:700">${s.name}</div><div class="small">${s.desc}</div></div>`; const btn = document.createElement('button'); btn.textContent='Buy '+s.cost; btn.addEventListener('click', ()=>{ if(player.prey>=s.cost){ player.prey-=s.cost; player.inv.push({name:s.name,qty:1}); save(player); render(); log('Purchased '+s.name) } else log('Not enough $PREY'); }); row.appendChild(btn); el.appendChild(row); }) }
 
-    $('#resetBtn').addEventListener('click', () => {
-      store.clear(); player = initPlayer(player.name); render(player); log('Local data reset.');
-      if (isTG) tg.MainButton.hide();
-    });
-
-    // Send the last action back to the bot
-    function sendAction(type, extra) {
-      if (!isTG) { alert('Open in Telegram to send data to the bot.'); return }
-      const payload = {
-        _type: 'eternal_hunt_action',
-        action: type,
-        player,
-        extra,
-        ts: Date.now()
-      };
-      tg.sendData(JSON.stringify(payload));
-      tg.HapticFeedback?.notificationOccurred('success');
-      tg.MainButton.hide();
-      log('Action sent to bot.');
+    // Leaderboard (local mock)
+    function renderLeaderboard(){ const el = $('#leaderboard'); el.innerHTML=''; const lb = JSON.parse(localStorage.getItem('eh_leaderboard')||'[]'); const combined = [{name:player.name,prey:player.prey}].concat(lb).sort((a,b)=>b.prey-a.prey).slice(0,6);
+      combined.forEach((x,i)=>{ const row=document.createElement('div'); row.className='item'; row.innerHTML=`<div>#${i+1} ${x.name}</div><div>${x.prey} $PREY</div>`; el.appendChild(row) });
     }
 
-    // Allow basic browser testing without Telegram
-    if (!isTG) {
-      console.warn('Running outside Telegram. Using local demo mode.');
-    }
+    // Simple leaderboard update on save
+    function updateLeaderboard(){ let lb = JSON.parse(localStorage.getItem('eh_leaderboard')||'[]'); lb = lb.filter(x=>x.name!==player.name); lb.push({name:player.name,prey:player.prey}); localStorage.setItem('eh_leaderboard', JSON.stringify(lb)); }
+
+    // Utility
+    function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+    // Export / Reset
+    $('#exportBtn').addEventListener('click', ()=>{ navigator.clipboard.writeText(JSON.stringify(player)); log('Exported to clipboard') });
+    $('#resetBtn').addEventListener('click', ()=>{ if(confirm('Reset local progress?')){ clearSave(); player = { name: player.name, level:1, strength:1, prey:0, xp:0, role:'wolf', inv:[] }; save(player); render(); log('Local reset done') } });
+
+    // Role change
+    $('#roleSel').addEventListener('change', (e)=>{ player.role = e.target.value; save(player); render(); log('Role set to '+player.role) });
+
+    // Show Telegram MainButton to send action data to bot
+    function showMainButtonWithData(obj){ if(!isTG) return; tg.MainButton.setText('Send Action to Bot'); tg.MainButton.show(); tg.MainButton.onClick(()=>{ tg.sendData(JSON.stringify(obj)); tg.MainButton.hide(); tg.HapticFeedback?.notificationOccurred('success'); }) }
+
+    // Save before unload
+    window.addEventListener('beforeunload', ()=>{ save(player); updateLeaderboard(); });
+
+    // Initial render
+    save(player); render();
+
+    // If inside Telegram, set avatar and name from init data
+    if(isTG){ const u = tg.initDataUnsafe?.user; if(u){ if(u.photo_url) document.getElementById('avatar').src = u.photo_url; player.name = player.name || u.first_name; save(player); render(); } }
+
   </script></body>
 </html>

@@ -68,6 +68,10 @@
   <div id="codex" class="tab"><h2>Lore Codex</h2><div id="codexEntries"></div></div>
   <div id="leaderboard" class="tab"><h2>Leaderboard</h2><ol id="leaderboardList"></ol></div>
 
+  <!-- Sounds -->
+  <audio id="wolfHowl" src="https://actions.google.com/sounds/v1/animals/wolf_howl.ogg"></audio>
+  <audio id="bowTwang" src="https://actions.google.com/sounds/v1/foley/bow_pull_release.ogg"></audio>
+
   <script>
     let prey=0,strength=1,level=1,xp=0;
     let username=localStorage.getItem('username')||"Unknown Wolf";
@@ -100,6 +104,20 @@
       "The final prophecy: when Wolves fall, Hunters reign eternal."
     ];
 
+    function openTab(tab){
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      document.querySelectorAll('.tab-buttons button').forEach(b=>b.classList.remove('active'));
+      document.querySelector(`.tab-buttons button[onclick="openTab('${tab}')"]`).classList.add('active');
+      if(tab==='codex') renderCodex();
+    }
+
+    function saveUsername(){
+      username=document.getElementById('usernameInput').value||"Unknown";
+      localStorage.setItem('username',username);
+      document.getElementById('usernameDisplay').textContent=`Username: ${username}`;
+    }
+
     function setRole(chosen){
       role=chosen;
       localStorage.setItem('role',role);
@@ -114,6 +132,10 @@
         const newEntry = codexList[unlockedCodex.length];
         unlockedCodex.push(newEntry);
         renderNewCodexEntry(newEntry);
+
+        // Play role-specific sound
+        if(role==="Wolf") document.getElementById('wolfHowl').play();
+        if(role==="Hunter") document.getElementById('bowTwang').play();
       }
     }
 

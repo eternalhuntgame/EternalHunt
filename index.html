@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Eternal Hunt Game</title>
   <style>
     body { font-family:'Trebuchet MS',sans-serif; background:#111; color:#eee; text-align:center; margin:0; padding:0;}
@@ -13,8 +13,13 @@
     .tab { display:none; padding:20px; animation:fadeIn .5s;}
     .tab.active { display:block; }
     .quest.completed { text-decoration:line-through; color:#aaa; }
+
     @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     @keyframes fadePulse { from{opacity:.8;} to{opacity:1;} }
+
+    /* Battle effects */
+    .flash { animation:flash 0.3s alternate 2; }
+    @keyframes flash { from{background:#300;} to{background:#111;} }
 
     /* Codex animations */
     .codex-entry { opacity:0; transform:translateY(10px); animation:entryFade .8s forwards; }
@@ -27,6 +32,8 @@
 </head>
 <body>
   <h1>🐺 Eternal Hunt</h1>
+
+  <!-- Navigation -->
   <div class="tab-buttons">
     <button onclick="openTab('profile')" class="active">Profile</button>
     <button onclick="openTab('hunt')">Hunt</button>
@@ -49,28 +56,65 @@
     <h3>Select Your Role</h3>
     <button onclick="setRole('Wolf')">🐺 Wolf</button>
     <button onclick="setRole('Hunter')">🏹 Hunter</button>
+
     <p id="usernameDisplay"></p>
     <p id="roleDisplay"></p>
   </div>
 
-  <!-- Tabs -->
-  <div id="hunt" class="tab"><h2>Hunt</h2><button onclick="hunt()">Hunt Prey</button><p id="huntResult"></p></div>
-  <div id="train" class="tab"><h2>Train</h2><button onclick="train()">Train (+Strength)</button><p id="trainResult"></p></div>
-  <div id="pvp" class="tab"><h2>PvP Arena</h2><button onclick="pvp()">Quick Match</button><div id="pvpResult"></div></div>
-  <div id="inventory" class="tab"><h2>Inventory</h2><ul id="inventoryList"></ul></div>
-  <div id="shop" class="tab"><h2>Relic Shop</h2>
+  <!-- Gameplay Tabs -->
+  <div id="hunt" class="tab">
+    <h2>Hunt</h2>
+    <button onclick="hunt()">Hunt Prey</button>
+    <p id="huntResult"></p>
+  </div>
+
+  <div id="train" class="tab">
+    <h2>Train</h2>
+    <button onclick="train()">Train (+Strength)</button>
+    <p id="trainResult"></p>
+  </div>
+
+  <div id="pvp" class="tab">
+    <h2>PvP Arena</h2>
+    <button onclick="pvp()">Quick Match</button>
+    <div id="pvpResult"></div>
+  </div>
+
+  <div id="inventory" class="tab">
+    <h2>Inventory</h2>
+    <ul id="inventoryList"></ul>
+  </div>
+
+  <div id="shop" class="tab">
+    <h2>Relic Shop</h2>
     <button onclick="buyItem('Moonfang Dagger',50)">Moonfang Dagger (50 $PREY)</button>
     <button onclick="buyItem('Relic of the Ancients',150)">Relic of the Ancients (150 $PREY)</button>
     <button onclick="buyItem('Totem of the Alpha',300)">Totem of the Alpha (300 $PREY)</button>
     <p id="shopResult"></p>
   </div>
-  <div id="quests" class="tab"><h2>Quests</h2><ul id="questList"></ul></div>
-  <div id="codex" class="tab"><h2>Lore Codex</h2><div id="codexEntries"></div></div>
-  <div id="leaderboard" class="tab"><h2>Leaderboard</h2><ol id="leaderboardList"></ol></div>
+
+  <div id="quests" class="tab">
+    <h2>Quests</h2>
+    <ul id="questList"></ul>
+  </div>
+
+  <div id="codex" class="tab">
+    <h2>Lore Codex</h2>
+    <div id="codexEntries"></div>
+  </div>
+
+  <div id="leaderboard" class="tab">
+    <h2>Leaderboard</h2>
+    <ol id="leaderboardList"></ol>
+  </div>
 
   <!-- Sounds -->
   <audio id="wolfHowl" src="https://actions.google.com/sounds/v1/animals/wolf_howl.ogg"></audio>
   <audio id="bowTwang" src="https://actions.google.com/sounds/v1/foley/bow_pull_release.ogg"></audio>
+  <audio id="huntSound" src="https://actions.google.com/sounds/v1/foley/cloth_swipe.ogg"></audio>
+  <audio id="trainSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <audio id="pvpHit" src="https://actions.google.com/sounds/v1/impacts/crash.ogg"></audio>
+  <audio id="shopSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
   <script>
     let prey=0,strength=1,level=1,xp=0;
@@ -78,37 +122,44 @@
     let role=localStorage.getItem('role')||"None";
     let inventory=JSON.parse(localStorage.getItem('inventory')||'[]');
     let leaderboard=JSON.parse(localStorage.getItem('leaderboard')||'[]');
-    let quests=[];
     let unlockedCodex=JSON.parse(localStorage.getItem('codex')||'[]');
 
-    const wolfCodex=[
-      "The First Howl shook the skies when the Alpha rose.",
-      "Under the Blood Moon, wolves gained strength beyond mortal limits.",
-      "The Relics were crafted from the bones of fallen gods.",
-      "The Totem of the Alpha binds the pack as one spirit.",
-      "The Eternal Fang can slay even the undying.",
-      "Whispers tell of a hidden Moon Temple deep in shadow forests.",
-      "Loyal wolves who fall return as Spirits of the Eternal Hunt.",
-      "Only the strongest Alpha may challenge the Eternal Alpha.",
-      "The final prophecy: when Hunters fall, Wolves ascend eternal."
+    const wolfQuests=[
+      {desc:"Hunt 3 prey",progress:0,goal:3,reward:30},
+      {desc:"Train 2 times",progress:0,goal:2,reward:20},
+      {desc:"Win 1 PvP battle",progress:0,goal:1,reward:50},
+      {desc:"Hunt 5 prey",progress:0,goal:5,reward:40},
+      {desc:"Collect 100 $PREY",progress:0,goal:100,reward:100},
+      {desc:"Reach Level 3",progress:0,goal:3,reward:70},
+      {desc:"Win 3 PvP battles",progress:0,goal:3,reward:120},
+      {desc:"Train 5 times",progress:0,goal:5,reward:60},
+      {desc:"Own 2 relics",progress:0,goal:2,reward:80},
+      {desc:"Complete all Wolf quests",progress:0,goal:9,reward:200}
     ];
-    const hunterCodex=[
-      "The first Hunters swore an oath under starlight.",
-      "Silver arrows were forged to pierce the wolves’ hide.",
-      "The Order of the Hunt was founded to protect mankind.",
-      "The Charm of Precision guided arrows through darkness.",
-      "The Relic of Ancients once belonged to the First Hunter.",
-      "The Cloak of the Eternal Hunt conceals the chosen.",
-      "Hunters believe wolves carry fragments of cursed gods.",
-      "To slay the Alpha is to claim the Hunt’s Crown.",
-      "The final prophecy: when Wolves fall, Hunters reign eternal."
+    const hunterQuests=[
+      {desc:"Hunt 2 prey",progress:0,goal:2,reward:25},
+      {desc:"Train 3 times",progress:0,goal:3,reward:30},
+      {desc:"Win 1 PvP battle",progress:0,goal:1,reward:50},
+      {desc:"Hunt 4 prey",progress:0,goal:4,reward:35},
+      {desc:"Collect 120 $PREY",progress:0,goal:120,reward:120},
+      {desc:"Reach Level 3",progress:0,goal:3,reward:70},
+      {desc:"Win 2 PvP battles",progress:0,goal:2,reward:90},
+      {desc:"Train 6 times",progress:0,goal:6,reward:70},
+      {desc:"Own 1 relic",progress:0,goal:1,reward:60},
+      {desc:"Complete all Hunter quests",progress:0,goal:9,reward:200}
     ];
+
+    const wolfCodex=[ "The First Howl shook the skies when the Alpha rose.","Under the Blood Moon, wolves gained strength beyond mortal limits.","The Relics were crafted from the bones of fallen gods.","The Totem of the Alpha binds the pack as one spirit.","The Eternal Fang can slay even the undying.","Whispers tell of a hidden Moon Temple deep in shadow forests.","Loyal wolves who fall return as Spirits of the Eternal Hunt.","Only the strongest Alpha may challenge the Eternal Alpha.","The final prophecy: when Hunters fall, Wolves ascend eternal."];
+    const hunterCodex=[ "The first Hunters swore an oath under starlight.","Silver arrows were forged to pierce the wolves’ hide.","The Order of the Hunt was founded to protect mankind.","The Charm of Precision guided arrows through darkness.","The Relic of Ancients once belonged to the First Hunter.","The Cloak of the Eternal Hunt conceals the chosen.","Hunters believe wolves carry fragments of cursed gods.","To slay the Alpha is to claim the Hunt’s Crown.","The final prophecy: when Wolves fall, Hunters reign eternal."];
 
     function openTab(tab){
       document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
       document.getElementById(tab).classList.add('active');
       document.querySelectorAll('.tab-buttons button').forEach(b=>b.classList.remove('active'));
       document.querySelector(`.tab-buttons button[onclick="openTab('${tab}')"]`).classList.add('active');
+      if(tab==='inventory') renderInventory();
+      if(tab==='quests') renderQuests();
+      if(tab==='leaderboard') renderLeaderboard();
       if(tab==='codex') renderCodex();
     }
 
@@ -126,25 +177,139 @@
       document.getElementById('roleDisplay').textContent=`Your Role: ${role==="Wolf"?"🐺 Wolf":"🏹 Hunter"}`;
     }
 
+    function hunt(){
+      let gain=Math.floor(Math.random()*10)+5;
+      prey+=gain;
+      xp++;
+      document.getElementById('huntResult').textContent=`You hunted and gained ${gain} $PREY! Total: ${prey}`;
+      document.getElementById('huntResult').classList.add("flash");
+      setTimeout(()=>document.getElementById('huntResult').classList.remove("flash"),400);
+      document.getElementById('huntSound').play();
+      checkQuests("hunt");
+      updateLevel();
+      updateLeaderboard();
+      save();
+    }
+
+    function train(){
+      strength++;
+      xp++;
+      document.getElementById('trainResult').textContent=`You trained. Strength: ${strength}`;
+      document.getElementById('trainSound').play();
+      checkQuests("train");
+      updateLevel();
+      save();
+    }
+
+    function pvp(){
+      let enemyStr=Math.floor(Math.random()*5)+1;
+      let result="";
+      if(strength>=enemyStr){ result="You won the battle!"; prey+=20; }
+      else{ result="You lost..."; }
+      let div=document.getElementById('pvpResult');
+      div.textContent=result;
+      div.classList.add("flash");
+      setTimeout(()=>div.classList.remove("flash"),400);
+      document.getElementById('pvpHit').play();
+      checkQuests("pvp",result.includes("won"));
+      updateLeaderboard();
+      save();
+    }
+
+    function buyItem(item,cost){
+      if(prey>=cost){
+        prey-=cost;
+        inventory.push(item);
+        document.getElementById('shopResult').textContent=`You bought ${item}`;
+        document.getElementById('shopSound').play();
+        checkQuests("buy");
+      } else {
+        document.getElementById('shopResult').textContent=`Not enough $PREY`;
+      }
+      save();
+    }
+
+    function renderInventory(){
+      let list=document.getElementById('inventoryList');
+      list.innerHTML="";
+      inventory.forEach(i=>{
+        let li=document.createElement('li');
+        li.textContent=i;
+        list.appendChild(li);
+      });
+    }
+
+    function updateLevel(){
+      if(xp>=level*5){ level++; xp=0; }
+    }
+
+    function updateLeaderboard(){
+      let entry=leaderboard.find(l=>l.username===username);
+      if(entry) entry.prey=prey;
+      else leaderboard.push({username,prey});
+      leaderboard.sort((a,b)=>b.prey-a.prey);
+      save();
+    }
+
+    function renderLeaderboard(){
+      let list=document.getElementById('leaderboardList');
+      list.innerHTML="";
+      leaderboard.forEach(l=>{
+        let li=document.createElement('li');
+        li.textContent=`${l.username}: ${l.prey} $PREY`;
+        list.appendChild(li);
+      });
+    }
+
+    function renderQuests(){
+      let list=document.getElementById('questList');
+      list.innerHTML="";
+      let qset=(role==="Wolf")?wolfQuests:hunterQuests;
+      qset.forEach((q,i)=>{
+        let li=document.createElement('li');
+        li.textContent=`${q.desc} (${q.progress}/${q.goal})`;
+        if(q.progress>=q.goal){ li.classList.add("quest","completed"); }
+        list.appendChild(li);
+      });
+    }
+
+    function checkQuests(action,won=false){
+      let qset=(role==="Wolf")?wolfQuests:hunterQuests;
+      qset.forEach(q=>{
+        if(action==="hunt" && q.desc.includes("Hunt")) q.progress++;
+        if(action==="train" && q.desc.includes("Train")) q.progress++;
+        if(action==="pvp" && won && q.desc.includes("PvP")) q.progress++;
+        if(action==="buy" && q.desc.includes("relic")) q.progress++;
+        if(action==="buy" && q.desc.includes("relics") && inventory.length>=q.goal) q.progress=q.goal;
+        if(q.desc.includes("Collect") && prey>=q.goal) q.progress=q.goal;
+        if(q.desc.includes("Reach Level") && level>=q.goal) q.progress=q.goal;
+        if(q.progress>=q.goal && !q.completed){
+          prey+=q.reward;
+          q.completed=true;
+          unlockCodexEntry();
+        }
+      });
+      save();
+    }
+
     function unlockCodexEntry(){
-      let codexList = role==="Wolf"?wolfCodex:hunterCodex;
+      let codexList=role==="Wolf"?wolfCodex:hunterCodex;
       if(unlockedCodex.length<codexList.length){
-        const newEntry = codexList[unlockedCodex.length];
+        const newEntry=codexList[unlockedCodex.length];
         unlockedCodex.push(newEntry);
         renderNewCodexEntry(newEntry);
-
-        // Play role-specific sound
         if(role==="Wolf") document.getElementById('wolfHowl').play();
         if(role==="Hunter") document.getElementById('bowTwang').play();
+        save();
       }
     }
 
     function renderCodex(){
       const container=document.getElementById('codexEntries');
       container.innerHTML="";
-      if(unlockedCodex.length===0){ 
+      if(unlockedCodex.length===0){
         container.innerHTML="<p>No lore unlocked yet. Complete quests to reveal the Hunt.</p>"; 
-        return; 
+        return;
       }
       unlockedCodex.forEach((entry,i)=>{
         let p=document.createElement('p'); 
@@ -160,17 +325,13 @@
       p.classList.add("codex-entry","highlight","typing");
       p.textContent="";
       container.appendChild(p);
-
-      // typewriter effect
       let i=0;
       function typeWriter(){
         if(i<text.length){
           p.textContent+=text.charAt(i);
           i++;
           setTimeout(typeWriter,50);
-        }else{
-          p.classList.remove("typing");
-        }
+        }else{ p.classList.remove("typing"); }
       }
       typeWriter();
     }
@@ -182,6 +343,10 @@
       localStorage.setItem('role',role);
       localStorage.setItem('codex',JSON.stringify(unlockedCodex));
     }
+
+    // Init
+    document.getElementById('usernameDisplay').textContent=`Username: ${username}`;
+    document.getElementById('roleDisplay').textContent=`Your Role: ${role}`;
   </script>
 </body>
 </html>

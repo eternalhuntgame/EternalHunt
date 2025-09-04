@@ -1,154 +1,228 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>🐺Eternal Hunt⚔️</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Eternal Hunt — Complete (No Firebase)</title>
 <style>
-  :root{
-    --bg:#06040a; --card:#0f1116; --muted:#98a0a6; --text:#eef0f6; --accent:#ff3b5c;
-    --accent-2:#ff8a9b;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#030309,#0b0b12);color:var(--text);-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1000px;margin:18px auto;padding:18px}
-  header{display:flex;gap:12px;align-items:center}
-  header img{width:56px;height:56px;border-radius:12px;filter:drop-shadow(0 6px 18px rgba(255,59,92,.08))}
-  h1{margin:0;font-size:20px}
-  .muted{color:var(--muted);font-size:13px}
-  .grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:14px}
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)),var(--card);border:1px solid rgba(255,255,255,0.03);padding:14px;border-radius:12px}
-  .stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .stat{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:8px;font-weight:700}
-  .controls{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
-  button{cursor:pointer;padding:10px 12px;border-radius:10px;border:none;background:#13131a;color:var(--text);font-weight:800;transition:transform .12s ease, box-shadow .12s}
-  button:active{transform:scale(.98)}
-  button.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#06060a;box-shadow:0 6px 18px rgba(255,59,92,.12)}
-  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04)}
-  .log{margin-top:12px;background:#06060a;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);min-height:72px;white-space:pre-wrap}
-  .small{font-size:13px;color:var(--muted)}
-  .shop-row{display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-radius:8px}
-  .shop-row + .shop-row{margin-top:6px}
-  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,.6),rgba(0,0,0,.8));z-index:120}
-  .modal.open{display:flex}
-  .panel{width:92%;max-width:720px;background:var(--card);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,.03)}
-  .codex-entry{opacity:0;transform:translateY(8px);animation:entryFade .6s forwards;margin-bottom:8px}
-  @keyframes entryFade{to{opacity:1;transform:none}}
-  .typing{border-right:2px solid var(--accent);white-space:nowrap;overflow:hidden;display:inline-block}
-  .glow{color:var(--accent);text-shadow:0 0 10px rgba(255,59,92,.12)}
-  .pulse{animation:pulse 1.6s infinite}
-  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
-  .flash-green{animation:flashGreen .6s}
-  @keyframes flashGreen{0%{background:rgba(46,204,113,.12)}100%{background:transparent}}
-  .flash-red{animation:flashRed .6s}
-  @keyframes flashRed{0%{background:rgba(255,59,92,.12)}100%{background:transparent}}
-  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+:root{
+  --bg:#05040a; --card:#0f1116; --muted:#98a0a6; --text:#eef0f6;
+  --accent:#ff3b5c; --accent-2:#ff8a9b; --success:#2ecc71;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:linear-gradient(180deg,#02020a,#0b0b12);
+  color:var(--text); -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1100px;margin:18px auto;padding:18px}
+header{display:flex;gap:12px;align-items:center}
+.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#06060a}
+h1{margin:0;font-size:20px}
+.muted{color:var(--muted);font-size:13px}
+
+/* panels */
+.panel{margin-top:14px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.03);background:linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.005));}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer}
+.panel-title{display:flex;gap:10px;align-items:center}
+.panel-body{padding:14px;display:none}
+.panel.open .panel-body{display:block}
+
+/* bits */
+.row{display:flex;gap:8px;align-items:center}
+.stat{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:8px;font-weight:700}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{padding:10px 12px;border-radius:10px;border:0;background:#111;color:var(--text);cursor:pointer;font-weight:800;transition:transform .12s}
+.btn:active{transform:scale(.98)}
+.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#06060a;box-shadow:0 8px 30px rgba(255,59,92,.08)}
+.ghost{background:transparent;border:1px solid rgba(255,255,255,.04)}
+
+/* log */
+.log{margin-top:12px;padding:12px;border-radius:10px;background:#06060a;min-height:72px;border:1px solid rgba(255,255,255,.02);white-space:pre-wrap}
+
+/* shop */
+.shop-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px}
+.shop-row + .shop-row{margin-top:6px}
+
+/* codex */
+.codex-entry{opacity:0;transform:translateY(8px);animation:codexFade .6s forwards;margin-bottom:8px}
+@keyframes codexFade{to{opacity:1;transform:none}}
+.typing{border-right:2px solid var(--accent);white-space:nowrap;overflow:hidden;display:inline-block}
+.glow{color:var(--accent);text-shadow:0 0 10px rgba(255,59,92,.12)}
+
+/* small */
+.small{font-size:13px;color:var(--muted)}
+.center{display:flex;align-items:center;justify-content:center}
+.flash-green{animation:flashGreen .6s}
+@keyframes flashGreen{0%{background:rgba(46,204,113,.12)}100%{background:transparent}}
+.flash-red{animation:flashRed .6s}
+@keyframes flashRed{0%{background:rgba(255,59,92,.12)}100%{background:transparent}}
+
+@media(max-width:980px){
+  .row{flex-direction:column;align-items:flex-start}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff3b5c' d='M21 3l-3 1l-2-2l-2 2l-2-2l-2 2l-2-2l-2 2L3 3l1 3l-2 2l2 2l-2 2l2 2l-1 3l3-1l2 2l2-2l2 2l2-2l2 2l2-2l3 1l-1-3l2-2l-2-2l2-2l-2-2z'/%3E%3C/svg%3E" alt="logo"/>
+    <div class="logo">EH</div>
     <div>
-      <h1>🐺 Eternal Hunt — Complete Playable</h1>
-      <div class="small">Role quests, Codex with reveal animations, sounds, shop, rewarded ad placeholder, local leaderboard</div>
+      <h1>🐺 Eternal Hunt — Complete</h1>
+      <div class="muted">Full playable client (local storage). Sounds & codex reveals included.</div>
     </div>
   </header>
 
-  <div class="grid" style="margin-top:14px">
-    <!-- Left: Main gameplay -->
-    <div class="card" id="mainCard">
-      <div class="stats">
+  <!-- Profile Panel (always top) -->
+  <div class="panel open" id="profilePanel">
+    <div class="panel-header">
+      <div class="panel-title"><strong>👤 Profile Settings</strong></div>
+      <div class="small">Set your Discord username & role</div>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div class="small">Discord Username</div>
+          <input id="usernameInput" placeholder="Wolf#1234" style="width:100%;padding:8px;border-radius:8px;border:0;background:#0b0b12;color:var(--text)"/>
+        </div>
+        <div style="width:160px">
+          <div class="small">Role</div>
+          <select id="roleSelect" style="width:100%;padding:8px;border-radius:8px;border:0;background:#0b0b12;color:var(--text)">
+            <option value="wolf">Wolf 🐺</option>
+            <option value="hunter">Hunter 🏹</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:8px">
+          <button class="primary" onclick="saveProfile()">Save Profile</button>
+          <button class="btn ghost" onclick="resetProgress()">Reset</button>
+        </div>
+      </div>
+      <div style="margin-top:12px" class="small">Profile is saved locally. Use the Save button before playing to register name & role for leaderboard.</div>
+    </div>
+  </div>
+
+  <!-- Controls / Play Panel -->
+  <div class="panel open" id="playPanel">
+    <div class="panel-header" onclick="togglePanel('playPanel')">
+      <div class="panel-title"><strong>🎮 Play</strong></div>
+      <div class="small">Hunt, Train, PvP, Daily & Rewarded Ads</div>
+    </div>
+    <div class="panel-body">
+      <div class="row" id="topStats">
         <div class="stat">Name: <span id="displayName">—</span></div>
         <div class="stat">Role: <span id="displayRole">—</span></div>
-        <div class="stat">L<span id="displayLevel">1</span></div>
+        <div class="stat">Level <span id="displayLevel">1</span></div>
         <div class="stat">STR <span id="displayStrength">1</span></div>
         <div class="stat">$PREY <span id="displayPrey">0</span></div>
       </div>
 
-      <div class="controls" style="margin-top:12px">
-        <button id="huntBtn" class="primary pulse" onclick="hunt()">🦌 Hunt</button>
-        <button onclick="train()">💪 Train (20 $PREY)</button>
-        <button onclick="openPvp()">⚔️ PvP</button>
-        <button onclick="showAd()">🎥 Watch Ad</button>
-        <button onclick="claimDaily()" class="ghost">☀️ Daily +25</button>
-        <div style="margin-left:auto;display:flex;gap:8px">
-          <button id="muteBtn" class="ghost" onclick="toggleMute()">🔊</button>
-        </div>
+      <div class="controls">
+        <button id="btnHunt" class="primary" onclick="doHunt()">🦌 Hunt</button>
+        <button onclick="doTrain()">💪 Train (20 $PREY)</button>
+        <button onclick="openPvpPanel()">⚔️ PvP</button>
+        <button onclick="startRewardedAd()">🎥 Watch Ad (+50 $PREY)</button>
+        <button onclick="claimDaily()">☀️ Daily (+25)</button>
+        <button id="muteBtn" class="btn ghost" onclick="toggleMute()">🔊</button>
       </div>
 
-      <div id="mainLog" class="log">Welcome. Set your profile below, then play — click any button to enable sounds.</div>
+      <div id="mainLog" class="log">Welcome to Eternal Hunt — save profile then play. Click any button once to enable sound in some browsers.</div>
+    </div>
+  </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-        <div class="card small">
-          <strong>Inventory</strong>
-          <div id="inventoryList" style="margin-top:8px" class="small"></div>
-        </div>
-        <div class="card small">
-          <strong>Relic Shop</strong>
-          <div style="margin-top:8px" class="small">
-            <div class="shop-row"><div>Alpha Fang (Wolf)</div><div><b>100</b> <button onclick="buyRelic('Alpha Fang',100)">Buy</button></div></div>
-            <div class="shop-row"><div>Hunter's Bow (Hunter)</div><div><b>100</b> <button onclick="buyRelic(\"Hunter's Bow\",100)">Buy</button></div></div>
-            <div class="shop-row"><div>Moon Totem</div><div><b>150</b> <button onclick="buyRelic('Moon Totem',150)">Buy</button></div></div>
-            <div class="shop-row"><div>Cloak of Shadows</div><div><b>150</b> <button onclick="buyRelic('Cloak of Shadows',150)">Buy</button></div></div>
-            <div style="margin-top:8px" id="shopMsg" class="small"></div>
-          </div>
-        </div>
-      </div>
+  <!-- Quests Panel -->
+  <div class="panel" id="questsPanel">
+    <div class="panel-header" onclick="togglePanel('questsPanel')">
+      <div class="panel-title"><strong>📜 Quests</strong></div>
+      <div class="small">Role-based questlines (10 each). Complete to earn rewards & codex.</div>
+    </div>
+    <div class="panel-body">
+      <div id="questsContainer" class="small"></div>
+    </div>
+  </div>
 
-      <div style="margin-top:12px" class="card">
-        <strong>Quests</strong>
-        <div id="questList" style="margin-top:8px" class="small"></div>
-      </div>
+  <!-- Inventory & Shop Panel -->
+  <div class="panel" id="shopPanel">
+    <div class="panel-header" onclick="togglePanel('shopPanel')">
+      <div class="panel-title"><strong>🎒 Inventory & 🛡 Shop</strong></div>
+      <div class="small">Buy relics using $PREY</div>
+    </div>
+    <div class="panel-body">
+      <strong>Inventory</strong>
+      <div id="inventoryList" class="small" style="margin-top:8px">Empty</div>
 
-      <div style="margin-top:12px" class="card">
-        <strong>Codex</strong>
-        <div id="codexBox" style="margin-top:8px"></div>
-        <div style="margin-top:8px"><button onclick="openCodex()">Open Codex</button></div>
+      <div style="margin-top:12px"><strong>Relic Shop</strong></div>
+      <div style="margin-top:8px" class="small">
+        <div class="shop-row"><div>Alpha Fang (Wolf) — 120 $PREY</div><div><button onclick="buyRelic('Alpha Fang',120)">Buy</button></div></div>
+        <div class="shop-row"><div>Hunter's Bow (Hunter) — 120 $PREY</div><div><button onclick="buyRelic(\"Hunter's Bow\",120)">Buy</button></div></div>
+        <div class="shop-row"><div>Moon Totem — 160 $PREY</div><div><button onclick="buyRelic('Moon Totem',160)">Buy</button></div></div>
+        <div class="shop-row"><div>Cloak of Shadows — 160 $PREY</div><div><button onclick="buyRelic('Cloak of Shadows',160)">Buy</button></div></div>
+        <div id="shopMessage" class="small" style="margin-top:8px"></div>
       </div>
     </div>
-
-    <!-- Right: Profile, PvP, Leaderboard -->
-    <aside class="card">
-      <div>
-        <div class="small">Discord Username</div>
-        <input id="usernameInput" placeholder="Wolf#1234" style="width:100%;padding:8px;border-radius:8px;border:none;background:#0b0b12;color:var(--text);margin-top:6px"/>
-      </div>
-      <div style="margin-top:8px">
-        <div class="small">Role</div>
-        <select id="roleSelect" style="width:100%;padding:8px;border-radius:8px;border:none;background:#0b0b12;color:var(--text);margin-top:6px">
-          <option value="wolf">Wolf 🐺</option>
-          <option value="hunter">Hunter 🏹</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="primary" onclick="saveProfile()">Save Profile</button>
-        <button onclick="resetProgress()">Reset</button>
-      </div>
-
-      <div style="margin-top:12px">
-        <strong>PvP Arena</strong>
-        <div style="margin-top:8px" id="pvpArea" class="small">
-          <button onclick="quickPvp()">Quick Match</button>
-          <div id="pvpResult" style="margin-top:8px"></div>
-        </div>
-      </div>
-
-      <div style="margin-top:12px">
-        <strong>Leaderboard (local)</strong>
-        <ol id="leaderboard" class="small" style="margin-top:8px"></ol>
-      </div>
-    </aside>
   </div>
+
+  <!-- Codex Panel -->
+  <div class="panel" id="codexPanel">
+    <div class="panel-header" onclick="togglePanel('codexPanel')">
+      <div class="panel-title"><strong>📖 Codex</strong></div>
+      <div class="small">Lore entries unlocked as you progress</div>
+    </div>
+    <div class="panel-body">
+      <div id="codexBox" class="small">Complete quests to reveal lore entries.</div>
+      <div style="margin-top:8px"><button onclick="openCodexModal()">Open Codex</button></div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Panel -->
+  <div class="panel" id="leaderPanel">
+    <div class="panel-header" onclick="togglePanel('leaderPanel')">
+      <div class="panel-title"><strong>🏆 Leaderboard</strong></div>
+      <div class="small">Local leaderboard demo (stored in localStorage)</div>
+    </div>
+    <div class="panel-body">
+      <ol id="leaderboardList" class="small"></ol>
+      <div style="margin-top:8px" class="small">Tip: open the page in other browsers/devices and save profile to simulate multiple players on the leaderboard.</div>
+    </div>
+  </div>
+
+  <!-- PvP Modal -->
+  <div id="pvpModal" class="modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:200">
+    <div style="background:var(--card);padding:16px;border-radius:12px;width:90%;max-width:560px;border:1px solid rgba(255,255,255,.03)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>PvP Arena</strong><button onclick="closePvpModal()">Close</button>
+      </div>
+      <div id="pvpBody" style="margin-top:12px;">
+        <div class="small">Quick Match vs Rival</div>
+        <div style="margin-top:12px"><button class="primary" onclick="doPvp()">Fight</button></div>
+        <pre id="pvpLog" class="log" style="margin-top:12px"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Codex modal -->
+  <div id="codexModal" class="modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:210">
+    <div style="background:var(--card);padding:18px;border-radius:12px;width:94%;max-width:720px;border:1px solid rgba(255,255,255,.03)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>Codex</strong>
+        <div><button onclick="closeCodexModal()">Close</button></div>
+      </div>
+      <div id="codexContent" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- Ad modal -->
+  <div id="adModal" class="modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:220">
+    <div style="background:var(--card);padding:18px;border-radius:12px;width:94%;max-width:520px;border:1px solid rgba(255,255,255,.03);text-align:center">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>Sponsored Reward</strong>
+        <button onclick="closeAdModal()">Cancel</button>
+      </div>
+      <div id="adBody" style="margin-top:12px" class="small center">Ad loading...</div>
+    </div>
+  </div>
+
 </div>
 
-<!-- Codex modal -->
-<div id="codexModal" class="modal" aria-hidden="true"><div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><strong>Codex</strong><button onclick="closeCodex()">Close</button></div><div id="codexContent" style="margin-top:12px"></div></div></div>
-
-<!-- Ad modal -->
-<div id="adModal" class="modal" aria-hidden="true"><div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><strong>Sponsored Content</strong><button onclick="closeAd()">Cancel</button></div><div id="adBody" style="margin-top:12px" class="small center">Ad loading...</div></div></div>
-
-<!-- Sounds (public hosted) -->
+<!-- Sounds -->
 <audio id="s_wolf" src="https://actions.google.com/sounds/v1/animals/wolf_howl.ogg"></audio>
 <audio id="s_bow" src="https://actions.google.com/sounds/v1/foley/bow_pull_release.ogg"></audio>
 <audio id="s_train" src="https://actions.google.com/sounds/v1/impacts/metal_thud.ogg"></audio>
@@ -157,16 +231,17 @@
 <audio id="s_ad" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
 <script>
-/* === Full playable Eternal Hunt (local-only backend) ===
-   - 10 quests per role
-   - codex with animated reveal
-   - sounds
-   - rewarded ad placeholder
-   - local leaderboard
-*/
+/* ===========================
+   Eternal Hunt — Complete (local)
+   - Role-specific 10 quests
+   - Codex reveals with animation
+   - Sounds + mute
+   - Rewarded ad placeholder
+   - Relic shop & inventory
+   - Local leaderboard
+   =========================== */
 
-/* ---------- Defaults & state ---------- */
-const STORAGE_KEY = 'eternal_hunt_state_v1';
+const STORAGE_KEY = 'eternal_hunt_full_v1';
 let state = loadState() || {
   username: '',
   role: 'wolf',
@@ -179,9 +254,10 @@ let state = loadState() || {
   codexUnlocked: []
 };
 let muted = false;
+let adTimer = null;
 
-/* ---------- Role-based full quest lists (10 each) ---------- */
-const WOLF_QUESTS = [
+/* ----- Role-based quests (10 each) ----- */
+const WOLF_QUESTS_FULL = [
   {id:1,desc:"Hunt 3 times",goal:3,progress:0,reward:30,completed:false},
   {id:2,desc:"Train 3 times",goal:3,progress:0,reward:25,completed:false},
   {id:3,desc:"Win 2 PvP battles",goal:2,progress:0,reward:"Alpha Fang",completed:false},
@@ -194,9 +270,9 @@ const WOLF_QUESTS = [
   {id:10,desc:"Complete Wolf questline",goal:9,progress:0,reward:300,completed:false}
 ];
 
-const HUNTER_QUESTS = [
-  {id:1,desc:"Hunt 3 times",goal:3,progress:0,reward:30,completed:false},
-  {id:2,desc:"Train 3 times",goal:3,progress:0,reward:25,completed:false},
+const HUNTER_QUESTS_FULL = [
+  {id:1,desc:"Hunt 4 times",goal:4,progress:0,reward:30,completed:false},
+  {id:2,desc:"Train 4 times",goal:4,progress:0,reward:25,completed:false},
   {id:3,desc:"Win 2 PvP battles",goal:2,progress:0,reward:"Hunter's Bow",completed:false},
   {id:4,desc:"Hunt 12 times",goal:12,progress:0,reward:70,completed:false},
   {id:5,desc:"Collect 160 $PREY",goal:160,progress:0,reward:110,completed:false},
@@ -207,7 +283,7 @@ const HUNTER_QUESTS = [
   {id:10,desc:"Complete Hunter questline",goal:9,progress:0,reward:300,completed:false}
 ];
 
-/* ---------- Codex content ---------- */
+/* ----- Codex pools ----- */
 const WOLF_CODEX = [
   "The First Howl shook the skies when the Alpha rose.",
   "Under the Blood Moon, wolves gained strength beyond mortal limits.",
@@ -232,277 +308,304 @@ const HUNTER_CODEX = [
   "The final prophecy: when Wolves fall, Hunters reign eternal."
 ];
 
-/* ---------- Load/save ---------- */
+/* ---------- Utility: load/save ---------- */
 function loadState(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e){ return null; }
+  try{ const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); return s; } catch(e){ return null; }
 }
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-/* ---------- Audio / UI helpers ---------- */
-function playSound(id){
-  if(muted) return;
-  try{ const a=document.getElementById(id); if(a){ a.currentTime=0; a.play().catch(()=>{}); } }catch(e){}
-}
+/* ---------- UI helpers ---------- */
+function togglePanel(id){ document.getElementById(id).classList.toggle('open'); }
+function setMainLog(txt){ document.getElementById('mainLog').textContent = txt; }
+function playSfx(id){ if(muted) return; try{ const a=document.getElementById(id); if(a){ a.currentTime = 0; a.play().catch(()=>{}); } } catch(e){} }
+function flashMain(color){ const el = document.getElementById('mainLog'); if(color==='green'){ el.classList.add('flash-green'); setTimeout(()=>el.classList.remove('flash-green'),600);} else { el.classList.add('flash-red'); setTimeout(()=>el.classList.remove('flash-red'),600);} }
 function toggleMute(){ muted = !muted; document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊'; }
 
-/* ---------- Init UI from state ---------- */
-function initUI(){
-  document.getElementById('displayName').textContent = state.username || '—';
-  document.getElementById('displayRole').textContent = state.role;
-  updateStats();
-  if(!state.quests || !Array.isArray(state.quests)) {
-    state.quests = (state.role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS)) : JSON.parse(JSON.stringify(WOLF_QUESTS));
+/* ---------- Initialize on first run ---------- */
+function initIfNeeded(){
+  if(!state.username){
+    state.username = '';
+  }
+  if(!state.role) state.role = 'wolf';
+  if(!state.quests || !Array.isArray(state.quests)){
+    state.quests = (state.role==='hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS_FULL)) : JSON.parse(JSON.stringify(WOLF_QUESTS_FULL));
   }
   if(!state.codexUnlocked) state.codexUnlocked = [];
+  // bind UI inputs
   document.getElementById('usernameInput').value = state.username || '';
-  document.getElementById('roleSelect').value = state.role || 'wolf';
-  renderInventory(); renderQuests(); renderCodexPanel(); renderLeaderboard();
+  document.getElementById('roleSelect').value = state.role;
+  document.getElementById('displayName').textContent = state.username || '—';
+  document.getElementById('displayRole').textContent = state.role;
+  renderAll();
 }
+initIfNeeded();
 
-/* ---------- Gameplay functions ---------- */
-function updateStats(){
-  document.getElementById('displayPrey').textContent = state.prey;
-  document.getElementById('displayStrength').textContent = state.strength;
-  document.getElementById('displayLevel').textContent = state.level;
-}
-
-function checkLevelUp(){
-  while(state.xp >= state.level * 100){
-    state.xp -= state.level * 100;
-    state.level++;
-  }
-  updateStats();
-}
-
-function hunt(){
-  // demo blood moon: every 4 minutes window
-  const base = Math.floor(Math.random()*10)+1;
-  const isBlood = Math.floor(Date.now()/60000)%4===0;
+/* ---------- Game actions ---------- */
+function doHunt(){
+  // base random gains
+  const base = Math.floor(Math.random()*10)+6; // 6..15
+  const isBlood = Math.floor(Date.now()/60000)%4===0; // every 4-minute window (demo)
   const gained = isBlood ? base * 2 : base;
   state.prey += gained;
-  state.xp += 10;
-  saveLog(`You hunted and gained ${gained} $PREY.${isBlood?' (Blood Moon bonus!)':''}`);
-  playSound(state.role === 'wolf' ? 's_wolf' : 's_bow');
+  state.xp += 12;
+  setMainLog(`You hunted and gained ${gained} $PREY.${isBlood ? ' Blood Moon bonus!' : ''}`);
+  playSfx(state.role==='wolf' ? 's_wolf' : 's_bow');
+  flashMain(gained >= 20 ? 'green':'red');
+  incrementQuests('hunt');
   checkLevelUp();
-  incrementQuestProgress('Hunt', 1);
-  saveState();
-  renderInventory(); renderQuests(); renderLeaderboard();
+  saveState(); renderAll();
 }
-
-function train(){
-  if(state.prey < 20){ saveLog('Not enough $PREY to train.'); playSound('s_lose'); return; }
+function doTrain(){
+  if(state.prey < 20){ setMainLog('Not enough $PREY to train.'); playSfx('s_lose'); return; }
   state.prey -= 20;
-  state.strength++;
-  state.xp += 6;
-  saveLog(`You trained. Strength is now ${state.strength}.`);
-  playSound('s_train');
-  incrementQuestProgress('Train', 1);
+  state.strength += 1;
+  state.xp += 8;
+  setMainLog(`You trained. Strength is now ${state.strength}.`);
+  playSfx('s_train');
+  incrementQuests('train');
   checkLevelUp();
-  saveState(); renderInventory(); renderQuests(); renderLeaderboard();
+  saveState(); renderAll();
 }
-
-function pvp(){
-  const enemyStr = Math.floor(Math.random()*5)+1;
+function doPvp(){
+  // quick PvP inside panel
+  const enemy = { name: 'Rival'+Math.floor(Math.random()*90+10), strength: Math.max(1, state.strength + (Math.floor(Math.random()*3)-1)) };
+  const playerRoll = Math.floor(Math.random()*20) + state.strength;
+  const enemyRoll = Math.floor(Math.random()*20) + enemy.strength;
   let outcome;
-  if(state.strength >= enemyStr){
-    const reward = 15 + Math.floor(Math.random()*10);
+  if(playerRoll >= enemyRoll){
+    const reward = Math.ceil(10 + Math.random()*25);
     state.prey += reward;
-    state.xp += 12;
-    outcome = `You won PvP and earned ${reward} $PREY!`;
-    playSound('s_win');
-    incrementQuestProgress('PvP', 1);
+    state.xp += 14;
+    outcome = `You defeated ${enemy.name} (STR ${enemy.strength}) and gained ${reward} $PREY!`;
+    playSfx('s_win');
+    incrementQuests('pvpwin');
   } else {
-    const loss = Math.min(state.prey, 10 + Math.floor(Math.random()*10));
+    const loss = Math.min(state.prey, Math.ceil(8 + Math.random()*18));
     state.prey -= loss;
-    outcome = `You lost PvP and lost ${loss} $PREY.`;
-    playSound('s_lose');
+    state.xp += 4;
+    outcome = `You were defeated by ${enemy.name} (STR ${enemy.strength}) and lost ${loss} $PREY.`;
+    playSfx('s_lose');
+    incrementQuests('pvploss');
   }
-  saveLog(outcome);
-  checkLevelUp(); saveState(); renderQuests(); renderInventory(); renderLeaderboard();
+  setMainLog(outcome); checkLevelUp(); saveState(); renderAll();
 }
 
-/* ---------- Quest helpers ---------- */
-function incrementQuestProgress(typeKeyword, amount){
-  // increments quests containing the word (Hunt, Train, PvP, relic)
+/* ---------- Quest system ---------- */
+function incrementQuests(action){
+  // action values: 'hunt', 'train', 'pvpwin', 'pvploss', 'relic'
   let completedAny = false;
   state.quests.forEach(q=>{
     if(q.completed) return;
-    const text = q.desc.toLowerCase();
-    if(typeKeyword === 'Hunt' && text.includes('hunt')) q.progress = (q.progress||0) + amount;
-    if(typeKeyword === 'Train' && text.includes('train')) q.progress = (q.progress||0) + amount;
-    if(typeKeyword === 'PvP' && text.includes('pvp')) q.progress = (q.progress||0) + amount;
-    if(typeKeyword === 'relic' && text.includes('own')) q.progress = state.inventory.length;
-    if(text.includes('collect') && state.prey >= q.goal) q.progress = q.goal;
-    if(text.includes('strength') && state.strength >= q.goal) q.progress = q.goal;
-    if(text.includes('level') && state.level >= q.goal) q.progress = q.goal;
-
+    const txt = q.desc.toLowerCase();
+    if(action==='hunt' && txt.includes('hunt')) q.progress = (q.progress||0)+1;
+    if(action==='train' && txt.includes('train')) q.progress = (q.progress||0)+1;
+    if(action==='pvpwin' && txt.includes('win')) q.progress = (q.progress||0)+1;
+    if(action==='pvploss' && txt.includes('survive')) q.progress = (q.progress||0)+1;
+    if(action==='relic' && txt.includes('own')) q.progress = state.inventory.length;
+    if(txt.includes('collect') && state.prey >= q.goal) q.progress = q.goal;
+    if(txt.includes('strength') && state.strength >= q.goal) q.progress = q.goal;
+    if(txt.includes('reach level') && state.level >= q.goal) q.progress = q.goal;
     if(q.progress >= q.goal && !q.completed){
       q.completed = true;
       // reward
-      if(typeof q.reward === 'number'){ state.prey += q.reward; saveLog(`Quest "${q.desc}" completed: +${q.reward} $PREY`); }
-      else { state.inventory.push(q.reward); saveLog(`Quest "${q.desc}" completed: received relic ${q.reward}`); }
+      if(typeof q.reward === 'number'){
+        state.prey += q.reward;
+        setMainLog(`Quest "${q.desc}" completed — +${q.reward} $PREY`);
+      } else {
+        state.inventory.push(q.reward);
+        setMainLog(`Quest "${q.desc}" completed — received ${q.reward}`);
+      }
       completedAny = true;
     }
   });
-  if(completedAny){
-    // unlock codex entry when any quest completes
-    unlockCodexEntry();
+  if(completedAny) { unlockNextCodex(); saveState(); }
+}
+
+/* ---------- Codex unlock ---------- */
+function unlockNextCodex(){
+  const pool = state.role==='hunter' ? HUNTER_CODEX : WOLF_CODEX;
+  if(state.codexUnlocked.length < pool.length){
+    const next = pool[state.codexUnlocked.length];
+    state.codexUnlocked.push(next);
+    // animated reveal in modal
+    revealCodex(next);
   }
 }
 
-/* ---------- Shop ---------- */
-function buyRelic(name,cost){
-  if(state.prey < cost){ document.getElementById('shopMsg').textContent = 'Not enough $PREY.'; return; }
-  state.prey -= cost;
-  state.inventory.push(name);
-  document.getElementById('shopMsg').textContent = `Bought ${name}.`;
-  playSound('s_win');
-  incrementQuestProgress('relic'); saveState(); renderInventory(); renderQuests(); renderLeaderboard();
+/* animated codex reveal */
+function revealCodex(text){
+  openCodexModal();
+  const content = document.getElementById('codexContent');
+  content.innerHTML = '';
+  const p = document.createElement('p'); p.className = 'typing'; p.textContent = '';
+  content.appendChild(p);
+  let i = 0;
+  const t = setInterval(()=> {
+    if(i < text.length){ p.textContent += text[i++]; }
+    else { clearInterval(t); p.classList.remove('typing'); renderCodexBox(); }
+  }, 34);
 }
 
-/* ---------- Inventory, Quests, Codex render ---------- */
+/* ---------- Shop & Inventory ---------- */
+function buyRelic(name,cost){
+  if(state.prey < cost){ document.getElementById('shopMessage').textContent = 'Not enough $PREY.'; playSfx('s_lose'); return; }
+  state.prey -= cost; state.inventory.push(name);
+  document.getElementById('shopMessage').textContent = `Bought ${name}.`;
+  playSfx('s_win'); incrementQuests('relic'); saveState(); renderAll();
+}
+
+/* ---------- Rewarded ad placeholder ---------- */
+function startRewardedAd(){
+  document.getElementById('adModal').style.display = 'flex';
+  const body = document.getElementById('adBody');
+  let sec = 5; body.textContent = `Watching ad... ${sec}s`;
+  playSfx('s_ad');
+  adTimer = setInterval(()=> {
+    sec--;
+    if(sec <= 0){
+      clearInterval(adTimer);
+      adTimer = null;
+      state.prey += 50;
+      saveState(); renderAll();
+      body.textContent = 'Ad finished — +50 $PREY';
+      setTimeout(closeAdModal, 900);
+      setMainLog('Ad finished: +50 $PREY');
+    } else body.textContent = `Watching ad... ${sec}s`;
+  }, 1000);
+}
+function closeAdModal(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } document.getElementById('adModal').style.display = 'none'; }
+function claimAdNow(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } state.prey += 50; saveState(); renderAll(); closeAdModal(); setMainLog('Ad granted: +50 $PREY'); }
+
+/* ---------- Daily ---------- */
+function claimDaily(){
+  const key = 'eh_daily_ts_v1';
+  const last = parseInt(localStorage.getItem(key) || '0', 10);
+  const now = Date.now();
+  if(now - last < 24*60*60*1000){ alert('Daily already claimed'); return; }
+  state.prey += 25; localStorage.setItem(key, String(now)); saveState(); renderAll(); setMainLog('Daily claimed: +25 $PREY');
+}
+
+/* ---------- PvP panel helpers ---------- */
+function openPvpPanel(){ document.getElementById('pvpModal').style.display = 'flex'; document.getElementById('pvpLog').textContent = 'Ready to fight.'; }
+function closePvpModal(){ document.getElementById('pvpModal').style.display = 'none'; }
+
+/* ---------- Save profile ---------- */
+function saveProfile(){
+  const name = document.getElementById('usernameInput').value.trim();
+  const role = document.getElementById('roleSelect').value;
+  if(!name){ alert('Enter a Discord username (e.g. Wolf#1234)'); return; }
+  // change role resets quests/codex to that role
+  const roleChanged = state.role !== role;
+  state.username = name; state.role = role;
+  if(roleChanged || !state.quests) {
+    state.quests = (role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS_FULL)) : JSON.parse(JSON.stringify(WOLF_QUESTS_FULL));
+    state.codexUnlocked = [];
+  }
+  saveState();
+  document.getElementById('displayName').textContent = state.username;
+  document.getElementById('displayRole').textContent = state.role;
+  setMainLog('Profile saved.');
+  renderAll();
+}
+
+/* ---------- Level up ---------- */
+function checkLevelUp(){
+  while(state.xp >= state.level * 100){ state.xp -= state.level * 100; state.level++; setMainLog(`Leveled up! Level ${state.level}`); }
+  saveState(); renderAll();
+}
+
+/* ---------- Leaderboard (local) ---------- */
+function renderLeaderboard(){
+  const key = 'eh_local_leader_v1';
+  let board = JSON.parse(localStorage.getItem(key) || '{}');
+  if(state.username) board[state.username] = { username: state.username, role: state.role, prey: state.prey, strength: state.strength, level: state.level, updated: Date.now() };
+  localStorage.setItem(key, JSON.stringify(board));
+  const arr = Object.values(board).sort((a,b)=>b.prey - a.prey).slice(0,20);
+  const el = document.getElementById('leaderboardList');
+  el.innerHTML = '';
+  arr.forEach(p => { const li = document.createElement('li'); li.textContent = `${p.username} ${p.role==='wolf'?'🐺':'🏹'} — ${p.prey} $PREY (L${p.level} STR${p.strength})`; el.appendChild(li); });
+}
+
+/* ---------- Render functions ---------- */
+function renderQuests(){
+  const c = document.getElementById('questsContainer'); c.innerHTML = '';
+  state.quests.forEach(q => {
+    const d = document.createElement('div');
+    d.style.marginBottom = '8px';
+    d.innerHTML = `<div style="font-weight:700">${q.desc}</div><div class="small">Progress ${q.progress||0}/${q.goal} • Reward: ${q.reward}</div>`;
+    if(q.completed) d.style.opacity = '.6';
+    c.appendChild(d);
+  });
+}
 function renderInventory(){
   const el = document.getElementById('inventoryList');
   el.innerHTML = state.inventory.length ? state.inventory.map(i=>`• ${i}`).join('<br>') : '<span class="small">Empty</span>';
 }
-function renderQuests(){
-  const el = document.getElementById('questList'); el.innerHTML = '';
-  state.quests.forEach(q=>{
-    const d = document.createElement('div');
-    d.style.marginBottom = '6px';
-    d.innerHTML = `<div style="font-weight:700">${q.desc}</div><div class="small">Progress ${q.progress||0}/${q.goal} • Reward: ${q.reward}</div>`;
-    if(q.completed) d.style.opacity = .6;
-    el.appendChild(d);
-  });
-}
-function renderCodexPanel(){
+function renderCodexBox(){
   const box = document.getElementById('codexBox');
   box.innerHTML = '';
   const pool = state.role === 'hunter' ? HUNTER_CODEX : WOLF_CODEX;
-  state.codexUnlocked.forEach((txt,i)=>{
-    const p = document.createElement('p'); p.className='codex-entry glow'; p.textContent = `${i+1}. ${txt}`; box.appendChild(p);
-  });
-}
-function openCodex(){
-  const panel = document.getElementById('codexModal'); panel.classList.add('open');
-  const content = document.getElementById('codexContent'); content.innerHTML = '';
-  const pool = state.role === 'hunter' ? HUNTER_CODEX : WOLF_CODEX;
-  if(state.codexUnlocked.length === 0){ content.innerHTML = '<div class="small">No lore unlocked yet. Complete quests to reveal codex.</div>'; return; }
+  if(state.codexUnlocked.length === 0){ box.innerHTML = '<div class="small">No lore unlocked yet. Complete quests to reveal entries.</div>'; return; }
   state.codexUnlocked.forEach((t,i)=>{
-    const p = document.createElement('p'); p.className='codex-entry'; p.textContent = `${i+1}. ${t}`; content.appendChild(p);
+    const p = document.createElement('p'); p.className = 'codex-entry glow'; p.textContent = `${i+1}. ${t}`; box.appendChild(p);
   });
 }
-function closeCodex(){ document.getElementById('codexModal').classList.remove('open'); }
-
-/* ---------- Codex unlock logic ---------- */
-const WOLF_POOL = WOLF_CODEX.slice();
-const HUNTER_POOL = HUNTER_CODEX.slice();
-function unlockCodexEntry(){
-  const pool = state.role === 'hunter' ? HUNTER_POOL : WOLF_POOL;
-  if(state.codexUnlocked.length < pool.length){
-    const next = pool[state.codexUnlocked.length];
-    state.codexUnlocked.push(next);
-    // animated reveal in panel
-    revealCodexAnimated(next);
-    // role sound
-    playSound(state.role === 'wolf' ? 's_wolf' : 's_bow');
-    saveState(); renderCodexPanel();
-  }
-}
-function revealCodexAnimated(text){
-  // small temporary modal-like reveal
-  const panel = document.getElementById('codexModal'); panel.classList.add('open');
-  const content = document.getElementById('codexContent'); content.innerHTML = '';
-  const p = document.createElement('p'); p.className='typing'; p.textContent='';
-  content.appendChild(p);
-  let i=0; (function t(){ if(i<text.length){ p.textContent += text[i++]; setTimeout(t,35); } else p.classList.remove('typing'); })();
-}
-
-/* ---------- Rewarded ad placeholder ---------- */
-let adTimer = null;
-function showAd(){
-  document.getElementById('adModal').classList.add('open');
-  const body = document.getElementById('adBody');
-  let t=5; body.textContent = `Watching ad... ${t}s`;
-  playSound('s_ad');
-  adTimer = setInterval(()=>{ t--; if(t<=0){ clearInterval(adTimer); adTimer=null; state.prey += 50; saveLog('Ad complete: +50 $PREY'); saveState(); renderInventory(); renderLeaderboard(); document.getElementById('adBody').textContent='Ad finished! +50 $PREY'; setTimeout(closeAd,900);} else body.textContent = `Watching ad... ${t}s`; },1000);
-}
-function closeAd(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } document.getElementById('adModal').classList.remove('open'); }
-function claimAdNow(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } state.prey += 50; saveLog('Ad claimed: +50 $PREY'); saveState(); renderInventory(); renderLeaderboard(); closeAd(); }
-
-/* ---------- Leaderboard (local shared via localStorage) ---------- */
-function renderLeaderboard(){
-  const key = 'eh_leaderboard_local_v1';
-  let board = JSON.parse(localStorage.getItem(key) || '{}');
-  board[state.username] = {username:state.username,role:state.role,prey:state.prey,level:state.level,strength:state.strength,updated:Date.now()};
-  localStorage.setItem(key,JSON.stringify(board));
-  // display top 20
-  const arr = Object.values(board).sort((a,b)=>b.prey - a.prey).slice(0,20);
-  const el = document.getElementById('leaderboard');
-  el.innerHTML = '';
-  arr.forEach(p=>{
-    const li = document.createElement('li');
-    li.textContent = `${p.username} ${p.role==='wolf'?'🐺':'🏹'} — ${p.prey} $PREY (L${p.level} STR${p.strength})`;
-    el.appendChild(li);
-  });
-}
-
-/* ---------- Profile & utilities ---------- */
-function saveProfile(){
-  const name = document.getElementById('usernameInput').value.trim();
-  const roleSel = document.getElementById('roleSelect').value;
-  if(!name){ alert('Enter a Discord username (e.g. Wolf#1234)'); return; }
-  state.username = name; state.role = roleSel;
-  // reset quests and codex for role change
-  state.quests = (state.role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS)) : JSON.parse(JSON.stringify(WOLF_QUESTS));
-  state.codexUnlocked = [];
-  saveState();
-  document.getElementById('displayName').textContent = state.username;
+function renderAll(){
+  document.getElementById('displayName').textContent = state.username || '—';
   document.getElementById('displayRole').textContent = state.role;
-  saveLog('Profile saved');
-  renderQuests(); renderCodexPanel(); renderLeaderboard();
+  document.getElementById('displayPrey').textContent = state.prey;
+  document.getElementById('displayStrength').textContent = state.strength;
+  document.getElementById('displayLevel').textContent = state.level;
+  renderQuests(); renderInventory(); renderCodexBox(); renderLeaderboard();
 }
 
+/* ---------- Codex modal ---------- */
+function openCodexModal(){
+  const modal = document.getElementById('codexModal'); modal.style.display = 'flex';
+  const content = document.getElementById('codexContent'); content.innerHTML = '';
+  if(state.codexUnlocked.length === 0){ content.innerHTML = '<div class="small">No lore unlocked yet.</div>'; return; }
+  state.codexUnlocked.forEach((t,i) => {
+    const p = document.createElement('p'); p.className = 'codex-entry'; p.textContent = `${i+1}. ${t}`; content.appendChild(p);
+  });
+}
+function closeCodexModal(){ document.getElementById('codexModal').style.display = 'none'; }
+
+/* ---------- Helper: reset progress ---------- */
 function resetProgress(){
-  if(!confirm('Reset progress locally?')) return;
+  if(!confirm('Reset local progress?')) return;
   localStorage.removeItem(STORAGE_KEY);
-  // keep username/role inputs but reload
+  // also remove local leaderboard
+  // localStorage.removeItem('eh_local_leader_v1');
   location.reload();
 }
 
-function saveLog(txt){
-  document.getElementById('mainLog').textContent = txt;
-}
+/* ---------- Init UI binders ---------- */
+document.getElementById('usernameInput').addEventListener('keydown', e => { if(e.key === 'Enter') saveProfile(); });
+document.getElementById('roleSelect').addEventListener('change', () => { /* no-op */ });
 
-/* ---------- small helpers ---------- */
-function quickPvp(){
-  // wrapper for PvP UI on right
-  pvp();
-  document.getElementById('pvpResult').textContent = document.getElementById('mainLog').textContent;
-}
+/* Expose some functions to buttons inside strings used earlier */
+window.togglePanel = togglePanel;
+window.doHunt = doHunt;
+window.doTrain = doTrain;
+window.openPvpPanel = openPvpPanel;
+window.doPvp = doPvp;
+window.buyRelic = buyRelic;
+window.startRewardedAd = startRewardedAd;
+window.claimDaily = claimDaily;
+window.saveProfile = saveProfile;
+window.resetProgress = resetProgress;
+window.openCodexModal = openCodexModal;
+window.closeCodexModal = closeCodexModal;
+window.openPvpPanel = openPvpPanel;
+window.closePvpModal = closePvpModal;
+window.toggleMute = toggleMute;
+window.closeAdModal = closeAdModal;
+window.claimAdNow = claimAdNow;
 
-/* ---------- init state on load ---------- */
-(function init(){
-  // if no username in state, prompt basic values
-  if(!state.username){
-    const n = prompt('Enter Discord username (e.g. Wolf#1234)','You#0001');
-    state.username = n || 'You#0001';
-  }
-  if(!state.role) state.role = 'wolf';
-  document.getElementById('usernameInput').value = state.username;
-  document.getElementById('roleSelect').value = state.role;
-  document.getElementById('displayName').textContent = state.username;
-  document.getElementById('displayRole').textContent = state.role;
-  // if quests missing set them
-  if(!state.quests || !Array.isArray(state.quests)){
-    state.quests = (state.role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS)) : JSON.parse(JSON.stringify(WOLF_QUESTS));
-  }
-  if(!state.codexUnlocked) state.codexUnlocked = [];
-  saveState();
-  initUI();
-})();
+/* ---------- Start: render UI ---------- */
+renderAll();
+setMainLog('Ready. Save your profile and begin the Eternal Hunt!');
+saveState();
 </script>
 </body>
 </html>

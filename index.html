@@ -69,80 +69,63 @@
     <!-- Right column -->
     <div>
       <div class="card">
-        <h3>🏆 Global Leaderboard</h3>
+        <h3>🏆 Leaderboard</h3>
         <ol id="leaderboardList"></ol>
       </div>
     </div>
   </div>
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-    // 🔥 Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyCo5-2sXN4S9Vatc39KvvGFgz_T0bk57Gg",
-      authDomain: "eternal-hunt-game.firebaseapp.com",
-      projectId: "eternal-hunt-game",
-      storageBucket: "eternal-hunt-game.appspot.com",
-      messagingSenderId: "374543567150",
-      appId: "1:374543567150:web:56711f82f75c8376e312bf"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
+  <script>
     // ===== Game state =====
     let username = localStorage.getItem('username') || prompt("Enter your Discord username:");
     localStorage.setItem('username', username);
     let role = localStorage.getItem('role') || prompt("Choose your role: Wolf or Hunter");
     localStorage.setItem('role', role);
 
-    let prey = 0, strength = 1, level = 1, xp = 0;
-    let inventory = [];
-    let quests = [];
+    let prey = parseInt(localStorage.getItem('prey')) || 0;
+    let strength = parseInt(localStorage.getItem('strength')) || 1;
+    let level = parseInt(localStorage.getItem('level')) || 1;
+    let xp = parseInt(localStorage.getItem('xp')) || 0;
+    let inventory = JSON.parse(localStorage.getItem('inventory') || "[]");
+    let quests = JSON.parse(localStorage.getItem('quests') || "[]");
     let codex = [];
 
     document.getElementById('usernameDisplay').textContent = username;
     document.getElementById('roleDisplay').textContent = role;
 
-    // Role-based quests
-    if(role.toLowerCase()==="wolf"){
-      quests = [
-        {text:"Hunt 5 prey", goal:5, progress:0, reward:50, completed:false},
-        {text:"Win 3 PvP battles", goal:3, progress:0, reward:"Alpha Fang", completed:false},
-        {text:"Train 5 times", goal:5, progress:0, reward:40, completed:false},
-        {text:"Defeat a Hunter", goal:1, progress:0, reward:"Moon Totem", completed:false},
-        {text:"Accumulate 200 $PREY", goal:200, progress:0, reward:"Cloak of Shadows", completed:false},
-        {text:"Reach Level 5", goal:5, progress:0, reward:100, completed:false},
-        {text:"Own 2 relics", goal:2, progress:0, reward:"Wolf Totem", completed:false},
-        {text:"Complete 3 quests", goal:3, progress:0, reward:80, completed:false},
-        {text:"Survive 3 PvP losses", goal:3, progress:0, reward:30, completed:false},
-        {text:"Train strength to 10", goal:10, progress:0, reward:"Wolf Banner", completed:false}
-      ];
-      codex = [
-        {level:1,text:"The Pack awakens under the Blood Moon."},
-        {level:5,text:"Wolves claim the first relics of power."},
-        {level:10,text:"Alpha spirits whisper through the hunt."}
-      ];
-    } else {
-      quests = [
-        {text:"Hunt 3 prey", goal:3, progress:0, reward:40, completed:false},
-        {text:"Win 3 PvP battles", goal:3, progress:0, reward:"Hunter’s Bow", completed:false},
-        {text:"Train 5 times", goal:5, progress:0, reward:40, completed:false},
-        {text:"Defeat a Wolf", goal:1, progress:0, reward:"Cloak of Shadows", completed:false},
-        {text:"Accumulate 200 $PREY", goal:200, progress:0, reward:"Hunter’s Emblem", completed:false},
-        {text:"Reach Level 5", goal:5, progress:0, reward:100, completed:false},
-        {text:"Own 2 relics", goal:2, progress:0, reward:"Moon Totem", completed:false},
-        {text:"Complete 3 quests", goal:3, progress:0, reward:80, completed:false},
-        {text:"Survive 3 PvP losses", goal:3, progress:0, reward:30, completed:false},
-        {text:"Train strength to 10", goal:10, progress:0, reward:"Hunter’s Cloak", completed:false}
-      ];
-      codex = [
-        {level:1,text:"The Hunters swear oaths beneath starlight."},
-        {level:5,text:"Relics of ancient order resurface."},
-        {level:10,text:"The Hunt converges under crimson skies."}
-      ];
+    // Role-based quests + codex
+    function initRoleContent(){
+      if(quests.length===0){
+        if(role.toLowerCase()==="wolf"){
+          quests = [
+            {text:"Hunt 5 prey", goal:5, progress:0, reward:50, completed:false},
+            {text:"Win 3 PvP battles", goal:3, progress:0, reward:"Alpha Fang", completed:false}
+          ];
+          codex = [
+            {level:1,text:"The Pack awakens under the Blood Moon."},
+            {level:5,text:"Wolves claim the first relics of power."}
+          ];
+        } else {
+          quests = [
+            {text:"Hunt 3 prey", goal:3, progress:0, reward:40, completed:false},
+            {text:"Win 3 PvP battles", goal:3, progress:0, reward:"Hunter’s Bow", completed:false}
+          ];
+          codex = [
+            {level:1,text:"The Hunters swear oaths beneath starlight."},
+            {level:5,text:"Relics of ancient order resurface."}
+          ];
+        }
+      }
+    }
+    initRoleContent();
+
+    function saveGame(){
+      localStorage.setItem('prey',prey);
+      localStorage.setItem('strength',strength);
+      localStorage.setItem('level',level);
+      localStorage.setItem('xp',xp);
+      localStorage.setItem('inventory',JSON.stringify(inventory));
+      localStorage.setItem('quests',JSON.stringify(quests));
     }
 
     // ===== Core functions =====
@@ -150,7 +133,7 @@
       document.getElementById('preyDisplay').textContent = prey;
       document.getElementById('strengthDisplay').textContent = strength;
       document.getElementById('levelDisplay').textContent = level;
-      renderInventory(); renderQuests(); renderCodex();
+      renderInventory(); renderQuests(); renderCodex(); renderLeaderboard();
     }
 
     function isBloodMoon(){ return (Math.floor(Date.now()/60000)%4===0); }
@@ -161,30 +144,30 @@
       else document.getElementById('bloodMoon').textContent="";
       prey+=gained; xp+=10; checkLevelUp();
       document.getElementById('actionResult').textContent=`You hunted and gained ${gained} $PREY.`;
-      updateQuests("hunt"); savePlayer(); updateUI();
+      updateQuests("hunt"); saveGame(); updateUI();
     }
 
     function train(){
       if(prey>=20){ prey-=20; strength++; xp+=5; checkLevelUp(); document.getElementById('actionResult').textContent="You trained."; }
       else document.getElementById('actionResult').textContent="Not enough $PREY.";
-      updateQuests("train"); savePlayer(); updateUI();
+      updateQuests("train"); saveGame(); updateUI();
     }
 
     function pvp(){
       let enemyStr=Math.floor(Math.random()*5)+1;
       if(strength>=enemyStr){ document.getElementById('actionResult').textContent="You won PvP!"; prey+=15; updateQuests("pvp"); }
       else { document.getElementById('actionResult').textContent="You lost PvP."; }
-      savePlayer(); updateUI();
+      saveGame(); updateUI();
     }
 
     function buyItem(item,cost){
       if(prey>=cost){ prey-=cost; inventory.push(item); document.getElementById('shopResult').textContent=`Bought ${item}`; }
       else document.getElementById('shopResult').textContent="Not enough $PREY.";
-      updateQuests("relic"); savePlayer(); updateUI();
+      updateQuests("relic"); saveGame(); updateUI();
     }
 
-    function claimDaily(){ prey+=30; document.getElementById('rewardResult').textContent="Daily +30 $PREY"; savePlayer(); updateUI(); }
-    function watchAd(){ prey+=20; document.getElementById('rewardResult').textContent="Ad watched: +20 $PREY"; savePlayer(); updateUI(); }
+    function claimDaily(){ prey+=30; document.getElementById('rewardResult').textContent="Daily +30 $PREY"; saveGame(); updateUI(); }
+    function watchAd(){ prey+=20; document.getElementById('rewardResult').textContent="Ad watched: +20 $PREY"; saveGame(); updateUI(); }
 
     function checkLevelUp(){ while(xp>=level*100){ xp-=level*100; level++; } }
 
@@ -196,40 +179,32 @@
       quests.forEach(q=>{let li=document.createElement('li'); li.textContent=`${q.text} [${q.progress}/${q.goal}]`; if(q.completed) li.classList.add('quest','completed'); list.appendChild(li);});
     }
     function renderCodex(){
-      const div=document.getElementById('codexEntries'); div.innerHTML=""; codex.forEach(c=>{ if(level>=c.level){let p=document.createElement('p'); p.textContent=c.text; p.classList.add('glow'); div.appendChild(p);} });
+      const div=document.getElementById('codexEntries'); div.innerHTML="";
+      codex.forEach(c=>{ if(level>=c.level){let p=document.createElement('p'); p.textContent=c.text; p.classList.add('glow'); div.appendChild(p);} });
     }
-
     function updateQuests(type){
       quests.forEach(q=>{
         if(!q.completed){
           if(type==="hunt" && q.text.includes("Hunt")) q.progress++;
           if(type==="train" && q.text.includes("Train")) q.progress++;
           if(type==="pvp" && q.text.includes("PvP")) q.progress++;
-          if(type==="relic" && q.text.includes("relics")) q.progress=inventory.length;
-          if(q.text.includes("Level") && level>=q.goal) q.progress=q.goal;
-          if(q.text.includes("strength") && strength>=q.goal) q.progress=q.goal;
-          if(q.text.includes("Accumulate") && prey>=q.goal) q.progress=q.goal;
+          if(type==="relic" && q.text.includes("relic")) q.progress=inventory.length;
           if(q.progress>=q.goal){ q.completed=true; if(typeof q.reward==="number") prey+=q.reward; else inventory.push(q.reward); }
         }
       });
-      renderQuests();
     }
 
-    // ===== Firebase Save/Load =====
-    async function savePlayer(){
-      const ref = doc(db,"players",username);
-      await setDoc(ref,{ username, role, prey, strength, level, inventory },{merge:true});
-      loadLeaderboard();
-    }
-    async function loadLeaderboard(){
-      const snap=await getDocs(collection(db,"players"));
+    // Simple local leaderboard
+    function renderLeaderboard(){
+      let allPlayers=JSON.parse(localStorage.getItem('allPlayers')||"{}");
+      allPlayers[username]={username,role,prey,level,strength};
+      localStorage.setItem('allPlayers',JSON.stringify(allPlayers));
+      let arr=Object.values(allPlayers).sort((a,b)=>b.prey-a.prey).slice(0,10);
       const list=document.getElementById('leaderboardList'); list.innerHTML="";
-      let players=[]; snap.forEach(doc=>players.push(doc.data()));
-      players.sort((a,b)=>b.prey-a.prey);
-      players.slice(0,10).forEach(p=>{ let li=document.createElement('li'); li.textContent=`${p.username} (${p.role}) — ${p.prey} $PREY L${p.level} STR${p.strength}`; list.appendChild(li); });
+      arr.forEach(p=>{let li=document.createElement('li'); li.textContent=`${p.username} (${p.role}) — ${p.prey} $PREY L${p.level} STR${p.strength}`; list.appendChild(li);});
     }
 
-    updateUI(); savePlayer(); loadLeaderboard();
+    updateUI();
   </script>
 </body>
 </html>

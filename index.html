@@ -1,126 +1,156 @@
 <!doctype html>
-
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Eternal Hunt – Telegram Web App (Expanded)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Eternal Hunt — Blood Moon Alpha (Upgraded)</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    :root{--bg:#07060a;--card:#0f1116;--muted:#9aa0a6;--text:#e9e9f1;--accent:#ff3b5c;--soft:rgba(255,59,92,0.14);--pos:#2ecc71;--warn:#f39c12}
+    :root{
+      --bg:#06050a; --card:#0f1116; --muted:#9aa0a6; --text:#e9e9f1;
+      --accent:#ff3b5c; --soft:rgba(255,59,92,0.12); --pos:#2ecc71; --warn:#f39c12;
+      --glass: rgba(255,255,255,0.03);
+    }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
-    body{background:radial-gradient(1200px 600px at 75% -15%, rgba(255,59,92,0.06), transparent 50%), linear-gradient(180deg,#040306,#0b0b12);color:var(--text);-webkit-font-smoothing:antialiased}
+    body{background:
+      radial-gradient(1200px 600px at 75% -15%, rgba(255,59,92,0.04), transparent 50%),
+      linear-gradient(180deg,#020205,#07060a); color:var(--text); -webkit-font-smoothing:antialiased}
     .wrap{max-width:980px;margin:18px auto;padding:18px}
     header{display:flex;gap:14px;align-items:center}
-    header img{width:56px;height:56px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+    header img{width:56px;height:56px;border-radius:12px;box-shadow: 0 8px 24px rgba(0,0,0,.5)}
     h1{font-size:20px;margin:0}
-    p.muted{color:var(--muted);margin:0}.grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:14px}
-.card{background:linear-gradient(180deg, rgba(255,59,92,.03), transparent), var(--card);border:1px solid rgba(255,255,255,.04);padding:14px;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
-
-.stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.stat{background:rgba(255,255,255,.02);padding:8px 10px;border-radius:10px;font-weight:700}
-
-.controls{display:flex;gap:10px;margin-top:12px}
-button{cursor:pointer;border:1px solid rgba(255,255,255,.06);background:#11121a;color:var(--text);padding:10px 12px;border-radius:12px;font-weight:700}
-button.primary{background:linear-gradient(90deg,var(--accent),#ff6b7f);border:none;color:#06060a}
-
-.log{margin-top:12px;background:#0b0b12;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.03);min-height:72px;white-space:pre-wrap}
-
-/* Right column items */
-.section{margin-bottom:12px}
-.label{font-size:13px;color:var(--muted);margin-bottom:6px}
-
-.list{display:flex;flex-direction:column;gap:8px}
-.item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,.02)}
-
-/* PvP modal */
-.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,.6),rgba(0,0,0,.8));z-index:60}
-.modal.open{display:flex}
-.modal .box{width:92%;max-width:720px;background:var(--card);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,.04)}
-.battle-line{display:flex;align-items:center;justify-content:space-between;gap:10px}
-
-/* inventory/shop */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.small{font-size:13px;color:var(--muted)}
-
-footer{margin-top:16px;display:flex;gap:8px;align-items:center}
-.chip{padding:6px 10px;border-radius:999px;background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.12);font-weight:700}
-
-@media (max-width:880px){.grid{grid-template-columns:1fr}.wrap{padding:12px}}
-
+    p.muted{color:var(--muted);margin:0}
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:14px}
+    .card{background:linear-gradient(180deg, rgba(255,59,92,.03), transparent), var(--card);border:1px solid var(--glass);padding:14px;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+    .stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .stat{background:rgba(255,255,255,.02);padding:8px 10px;border-radius:10px;font-weight:700}
+    .controls{display:flex;gap:10px;margin-top:12px}
+    button{cursor:pointer;border:1px solid rgba(255,255,255,.06);background:#11121a;color:var(--text);padding:10px 12px;border-radius:12px;font-weight:700}
+    button.primary{background:linear-gradient(90deg,var(--accent),#ff6b7f);border:none;color:#06060a}
+    .log{margin-top:12px;background:#0b0b12;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.03);min-height:72px;white-space:pre-wrap}
+    .section{margin-bottom:12px}
+    .label{font-size:13px;color:var(--muted);margin-bottom:6px}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,.02)}
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,.6),rgba(0,0,0,.8));z-index:60}
+    .modal.open{display:flex}
+    .modal .box{width:94%;max-width:820px;background:var(--card);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,.04)}
+    .battle-line{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .small{font-size:13px;color:var(--muted)}
+    footer{margin-top:16px;display:flex;gap:8px;align-items:center}
+    .chip{padding:6px 10px;border-radius:999px;background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.12);font-weight:700}
+    .moon { position:fixed; right:24px; top:24px; width:64px; height:64px; border-radius:999px; pointer-events:none; display:flex; align-items:center; justify-content:center; z-index:40; box-shadow:0 6px 30px rgba(255,59,92,.06) }
+    .moon .crescent { width:50px; height:50px; border-radius:999px; background: radial-gradient(circle at 40% 30%, rgba(255,59,92,0.28), transparent 40%), rgba(255,59,92,0.12); transform: rotate(-18deg); box-shadow: 0 0 30px rgba(255,59,92,.08); }
+    .glow-bg{ animation: pulse 3s infinite; }\n    @keyframes pulse { 0%{filter:brightness(1)}50%{filter:brightness(1.12)}100%{filter:brightness(1)} }
+    .trophy { color:gold; font-weight:900; text-shadow: 0 4px 10px rgba(0,0,0,.6) }
+    .badge { padding:6px 8px; border-radius:8px; background: rgba(255,255,255,.03); font-weight:800 }
+    .achieved { color:var(--pos); font-weight:800 }
+    @media (max-width:880px){ .grid{grid-template-columns:1fr} .moon{right:10px; top:10px} .wrap{padding:12px} }
   </style>
 </head>
 <body>
+  <div class="moon" id="moon" title="Blood Moon">
+    <div class="crescent" id="moonC"></div>
+  </div>
+
   <div class="wrap">
     <header>
       <img id="avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff3b5c' d='M21 3l-3 1l-2-2l-2 2l-2-2l-2 2l-2-2l-2 2L3 3l1 3l-2 2l2 2l-2 2l2 2l-1 3l3-1l2 2l2-2l2 2l2-2l2 2l2-2l3 1l-1-3l2-2l-2-2l2-2l-2-2z'/%3E%3C/svg%3E" alt="wolf"/>
       <div>
         <h1>🐺 Eternal Hunt — Blood Moon Alpha</h1>
-        <p class="muted">Expanded Web App — Hunt, PvP, Inventory & Shop (no backend required)</p>
+        <p class="muted">Upgraded Web App — Quests, Achievements, Events, PvP history & more</p>
       </div>
-    </header><div class="grid">
-  <div class="card">
-    <div class="stats">
-      <div class="stat">Name: <span id="username">—</span></div>
-      <div class="stat">L<span id="level">1</span></div>
-      <div class="stat">STR <span id="strength">1</span></div>
-      <div class="stat">$PREY <span id="prey">0</span></div>
-      <div class="stat">Role <span id="roleTag">Wolf</span></div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div class="stats">
+          <div class="stat">Name: <span id="username">—</span></div>
+          <div class="stat">L<span id="level">1</span></div>
+          <div class="stat">STR <span id="strength">1</span></div>
+          <div class="stat">$PREY <span id="prey">0</span></div>
+          <div class="stat">Role <span id="roleTag">Wolf</span></div>
+          <div class="stat badge" id="rankBadge">Cub</div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button id="huntBtn" class="primary">Hunt</button>
+          <button id="trainBtn">Train (20 $PREY)</button>
+          <button id="pvpBtn">Quick PvP</button>
+          <button id="questsBtn">Quests</button>
+          <button id="codexBtn">Codex</button>
+          <div style="margin-left:auto" class="small">Mode: <span id="modeTag">Local Demo</span></div>
+        </div>
+
+        <div class="log" id="log">Ready. Hunt to collect $PREY. Complete Quests to earn rewards.</div>
+
+        <div style="margin-top:12px" class="grid-2">
+          <div class="card small">
+            <div class="small"><strong>Inventory</strong></div>
+            <div id="inventoryList" style="margin-top:10px"></div>
+          </div>
+          <div class="card small">
+            <div class="small"><strong>Shop / Relics</strong></div>
+            <div style="margin-top:10px" id="shopList"></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card">
+        <div class="section">
+          <div class="label">Player Actions</div>
+          <div class="list">
+            <div class="item"><div>Profile</div><div><button id="profileBtn">View</button></div></div>
+            <div class="item"><div>Export Save</div><div><button id="exportBtn">Export</button></div></div>
+            <div class="item"><div>Reset Local</div><div><button id="resetBtn">Reset</button></div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="label">Quests</div>
+          <div id="questsList" class="list small"></div>
+        </div>
+
+        <div class="section">
+          <div class="label">Achievements</div>
+          <div id="achievementsList" class="list small"></div>
+        </div>
+
+        <div class="section">
+          <div class="label">Leaderboards (local)</div>
+          <div id="leaderboard" class="list small"></div>
+        </div>
+
+        <div class="section">
+          <div class="label">Settings</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="roleSel"><option value="wolf">Wolf</option><option value="hunter">Hunter</option><option value="spirit">Spirit</option></select>
+            <button id="muteBtn">🔊</button>
+            <div style="margin-left:auto" class="chip">Prototype</div>
+          </div>
+        </div>
+      </aside>
     </div>
 
-    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <button id="huntBtn" class="primary">Hunt</button>
-      <button id="trainBtn">Train (20 $PREY)</button>
-      <button id="pvpBtn">Quick PvP</button>
-      <button id="questsBtn">Quests</button>
-      <div style="margin-left:auto" class="small">Mode: <span id="modeTag">Local Demo</span></div>
-    </div>
-
-    <div class="log" id="log">Ready. Try Hunt to collect $PREY. Click Quick PvP to battle another hunter (simulated).</div>
-
-    <div style="margin-top:12px" class="grid-2">
-      <div class="card small">
-        <div class="small"><strong>Inventory</strong></div>
-        <div id="inventoryList" style="margin-top:10px"></div>
-      </div>
-      <div class="card small">
-        <div class="small"><strong>Shop</strong></div>
-        <div style="margin-top:10px" id="shopList"></div>
-      </div>
-    </div>
+    <footer>
+      <div class="chip">Eternal Hunt • Alpha</div>
+      <div style="margin-left:auto" class="small">Open inside Telegram for WebApp features (Main Button & sendData).</div>
+    </footer>
   </div>
 
-  <aside class="card">
-    <div class="section">
-      <div class="label">Player Actions</div>
-      <div class="list">
-        <div class="item"><div>Profile</div><div><button id="profileBtn">View</button></div></div>
-        <div class="item"><div>Reset Local</div><div><button id="resetBtn">Reset</button></div></div>
-        <div class="item"><div>Export Save</div><div><button id="exportBtn">Export</button></div></div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="label">Leaderboards (local)</div>
-      <div id="leaderboard" class="list small"></div>
-    </div>
-
-    <div class="section">
-      <div class="label">Settings</div>
-      <div style="display:flex;gap:8px;align-items:center"><select id="roleSel"><option value="wolf">Wolf</option><option value="hunter">Hunter</option><option value="spirit">Spirit</option></select><div style="margin-left:auto" class="chip">Prototype</div></div>
-    </div>
-  </aside>
-</div>
-
-<footer>
-  <div class="chip">Eternal Hunt • Alpha</div>
-  <div style="margin-left:auto" class="small">Open inside Telegram for WebApp features (Main Button & sendData).</div>
-</footer>
-
-  </div>  <!-- PvP Modal -->  <div id="pvpModal" class="modal" aria-hidden="true">
+  <!-- PvP Modal -->
+  <div id="pvpModal" class="modal" aria-hidden="true">
     <div class="box">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong>Quick PvP Match</strong><button id="closePvp">Close</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <strong>Quick PvP Match</strong>
+        <div>
+          <button id="toggleBlood">Toggle Blood Moon</button>
+          <button id="closePvp">Close</button>
+        </div>
+      </div>
+
       <div class="battle-line">
         <div style="flex:1;padding-right:10px">
           <div class="small">You</div>
@@ -134,160 +164,494 @@ footer{margin-top:16px;display:flex;gap:8px;align-items:center}
           <div class="small">STR <span id="p2Str">1</span> • L<span id="p2Lvl">1</span></div>
         </div>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px"><button id="fightBtn" class="primary">Fight</button><button id="cancelFight">Cancel</button></div>
+
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button id="fightBtn" class="primary">Fight</button>
+        <button id="cancelFight">Cancel</button>
+        <div style="margin-left:auto" class="small">Match history & trophies below</div>
+      </div>
+
       <div id="battleLog" class="log" style="margin-top:12px"></div>
+      <div style="margin-top:12px"><strong>Match History</strong><div id="matchHistory" class="small" style="margin-top:8px"></div></div>
     </div>
-  </div>  <script>
-    // Expanded client-side Web App for Eternal Hunt
-    const tg = window.Telegram?.WebApp;
-    const isTG = !!tg;
-    if (isTG){ tg.expand(); tg.ready(); }
+  </div>
 
-    // Local storage helper
-    const KEY = 'eh_player_v2';
-    function load(){ try { return JSON.parse(localStorage.getItem(KEY)) } catch(e){ return null } }
-    function save(p){ localStorage.setItem(KEY, JSON.stringify(p)) }
-    function clearSave(){ localStorage.removeItem(KEY) }
+<script>
+/* ------------------------------
+   Eternal Hunt — Front-end Game
+   ------------------------------
+   Features added:
+   - Quests & achievements (localStorage)
+   - Blood Moon scheduled activation (every 3rd day) + manual toggle
+   - Expanded Shop & Relics
+   - Codex (lore unlocks)
+   - Match history & trophies
+   - Sounds via WebAudio + mute toggle
+   - Works in Telegram WebApp (sendData) or local demo mode
+--------------------------------*/
 
-    // Default player
-    let player = load() || { name: isTG ? (tg.initDataUnsafe?.user?.first_name||'Hunter') : 'DemoWolf', telegram_id: isTG ? (tg.initDataUnsafe?.user?.id||null) : null, level:1, strength:1, prey:0, xp:0, role:'wolf', inv:[], lastActions:[] };
+const tg = window.Telegram?.WebApp;
+const isTG = !!tg;
+if (isTG){ tg.expand(); tg.ready(); }
 
-    // UI refs
-    const $ = s=>document.querySelector(s);
-    function render(){
-      $('#username').textContent = player.name;
-      $('#level').textContent = player.level;
-      $('#strength').textContent = player.strength;
-      $('#prey').textContent = player.prey;
-      $('#roleTag').textContent = capitalize(player.role);
-      $('#modeTag').textContent = isTG ? 'Telegram WebApp' : 'Local Demo';
-      renderInventory(); renderShop(); renderLeaderboard();
-    }
+const KEY = 'eh_player_v3';
+const LB_KEY = 'eh_leaderboard_v3';
+const BLOOD_KEY = 'eh_blood_active_v3';
+const ACH_KEY = 'eh_ach_v3';
+const QUEST_KEY = 'eh_quest_v3';
+const MATCH_KEY = 'eh_matches_v3';
 
-    function log(msg){ $('#log').textContent = msg; }
+function nowTs(){ return Date.now() }
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
 
-    function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1) }
+function loadJSON(k, fallback){ try{ return JSON.parse(localStorage.getItem(k)) || fallback } catch(e){ return fallback } }
+function saveJSON(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
 
-    // Simple RNG / server mode
-    // If you host an API, set BACKEND_URL to your endpoint and the client will POST actions to /api/action
-    const BACKEND_URL = null; // e.g. 'https://yourdomain.com/api/action'
+let player = loadJSON(KEY, null);
+if(!player){
+  player = {
+    name: isTG ? (tg.initDataUnsafe?.user?.first_name || 'Hunter') : 'DemoWolf',
+    telegram_id: isTG ? (String(tg.initDataUnsafe?.user?.id || '') ) : null,
+    level:1, strength:1, prey:0, xp:0, role:'wolf', inv:[], unlockedCodex:[], trophies:[], lastActions: []
+  };
+  saveJSON(KEY, player);
+}
 
-    async function postAction(action, extra={}){
-      const payload = { _type:'eternal_hunt_action', action, player:{telegram_id: player.telegram_id, name: player.name}, extra };
-      // If BACKEND_URL is set, POST to server
-      if (BACKEND_URL){
-        try{
-          const res = await fetch(BACKEND_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-          return await res.json();
-        }catch(e){ console.error('API error', e); return {error:true, message:e.message} }
+// Sound system (WebAudio)
+const audioCtx = (typeof AudioContext !== 'undefined') ? new AudioContext() : null;
+let audioEnabled = true;
+function playTone(freq=440, time=0.08, type='sine'){ if(!audioCtx || !audioEnabled) return; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime); g.gain.setValueAtTime(0.0001, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime+0.01); o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+time); setTimeout(()=>{ o.stop() }, time*1000 + 50); }
+
+// Blood Moon schedule: active every 3rd local day (demo predictable rule)
+function bloodMoonActive(){
+  const forced = loadJSON(BLOOD_KEY, null);
+  if(forced !== null) return forced;
+  const days = Math.floor(Date.now() / (24*60*60*1000));
+  return (days % 3) === 0;
+}
+function setBloodMoon(val){ saveJSON(BLOOD_KEY, val); updateMoonVisual(); }
+
+// Achievements list
+const ACHIEVEMENTS = [
+  {id:'first_hunt', title:'First Hunt', desc:'Complete your first hunt', check: p => p.lastActions.some(a => a.action==='hunt')},
+  {id:'level_5', title:'Rising Hunter', desc:'Reach level 5', check: p => p.level >= 5},
+  {id:'hundred_prey', title:'Satiated', desc:'Collect 100 $PREY', check: p => p.prey >= 100},
+  {id:'pvp_win_3', title:'Blood Taster', desc:'Win 3 PvP fights', check: p => (p.trophies?.filter(t=>t.type==='pvp_win')?.length || 0) >= 3}
+];
+
+// Quests (daily)
+const DEFAULT_QUESTS = [
+  {id:'q_hunt3', title:'Hunt 3 times', progressKey:'hunt_count', target:3, reward:{prey:50}},
+  {id:'q_win1', title:'Win 1 PvP', progressKey:'pvp_win', target:1, reward:{prey:40}},
+];
+
+// Shop & relics
+const SHOP_ITEMS = [
+  {id:'potion', name:'Strength Potion', cost:30, desc:'+1 STR (permanent)', apply: p => { p.strength += 1; }},
+  {id:'shroud', name:'Shadow Shroud', cost:120, desc:'+10% hunt bonus (passive)', apply: p => { p.inv.push({id:'shroud', name:'Shadow Shroud', qty:1}); }},
+  {id:'trophy', name:'Trophy (cosmetic)', cost:200, desc:'A gold trophy to show off', apply: p => { p.trophies.push({type:'cosmetic', title:'Golden Trophy', ts:nowTs()}); }}
+];
+
+// Codex (lore) entries unlock on level thresholds or achievements
+const CODEX = [
+  {id:'lore1', title:'The Oath', unlock: p => p.level >= 2, text:'Long before the Blood Moon, the first packs formed...'},
+  {id:'lore2', title:'Blood Moon', unlock: p => bloodMoonActive() || p.level >= 5, text:'When the Blood Moon rises, prey flees and beasts awaken.'},
+  {id:'lore3', title:'Relics', unlock: p => p.prey >= 200, text:'Relics are pieces of the hunt, imbued with ancient energy.'}
+];
+
+// UI helpers
+const $ = s => document.querySelector(s);
+function render(){
+  $('#username').textContent = player.name;
+  $('#level').textContent = player.level;
+  $('#strength').textContent = player.strength;
+  $('#prey').textContent = player.prey;
+  $('#roleTag').textContent = capitalize(player.role);
+  $('#modeTag').textContent = isTG ? 'Telegram WebApp' : 'Local Demo';
+  $('#rankBadge').textContent = rankFromLevel(player.level);
+  renderInventory();
+  renderShop();
+  renderQuests();
+  renderAchievements();
+  renderLeaderboard();
+  updateMoonVisual();
+  renderMatchHistory();
+  savePlayer();
+}
+
+function savePlayer(){ saveJSON(KEY, player); updateLeaderboard(); }
+
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1) }
+function rankFromLevel(l){
+  if(l>=15) return 'Alpha';
+  if(l>=8) return 'Hunter';
+  if(l>=4) return 'Ranger';
+  return 'Cub';
+}
+
+/* ---------------- Actions ---------------- */
+
+async function doHunt(){
+  disableButtons(true);
+  log('Hunting...');
+  playTone(520,0.08,'sawtooth');
+  // Determine base gain
+  const base = rand(3,10) * player.strength;
+  let bonus = 0;
+  if(player.role === 'wolf') bonus += Math.ceil(base * 0.15);
+  // Blood Moon doubles reward
+  if(bloodMoonActive()) bonus += Math.ceil((base + bonus) * 1); // double
+  // Shadow shroud relic gives 10% (detect in inv)
+  if(player.inv.some(i => i.id === 'shroud')) bonus += Math.ceil((base+bonus) * 0.10);
+  const gained = base + bonus;
+  player.prey += gained;
+  player.xp += 12;
+  player.lastActions.push({action:'hunt', gained, ts:nowTs()});
+  // Quests progress
+  incrementQuest('hunt_count', 1);
+  // Achievements check & level-up
+  checkLevelUp();
+  autoUnlockCodex();
+  log(`You hunted and gained ${gained} prey (base ${base}, bonus ${bonus}). Total $PREY: ${player.prey}`);
+  showMainBtnIfTG({action:'hunt', gained});
+  playTone(760,0.10,'triangle');
+  disableButtons(false);
+  render();
+}
+
+function doTrain(){
+  if(player.prey < 20){ log('Not enough $PREY to train. Need 20.'); playTone(220,0.12,'sine'); return; }
+  player.prey -= 20;
+  player.strength += 1;
+  player.xp += 6;
+  player.lastActions.push({action:'train', ts:nowTs()});
+  checkLevelUp();
+  log(`Training complete! Strength is now ${player.strength}.`);
+  showMainBtnIfTG({action:'train'});
+  playTone(480,0.09,'square');
+  render();
+}
+
+function quickPvp(){
+  // open modal
+  $('#pvpModal').classList.add('open');
+  $('#p1Name').textContent = player.name;
+  $('#p1Str').textContent = player.strength;
+  $('#p1Lvl').textContent = player.level;
+  $('#p2Name').textContent = 'Matching...';
+  $('#p2Str').textContent = '?';
+  $('#p2Lvl').textContent = '?';
+  $('#battleLog').textContent = 'Matching...';
+  // simulate match creation delay
+  setTimeout(()=> $('#battleLog').textContent = 'Opponent found. Ready.' , 700);
+}
+
+async function fight(){
+  $('#fightBtn').disabled = true;
+  $('#battleLog').textContent = 'Fighting...';
+  playTone(440,0.08,'sawtooth');
+  // generate opponent scaled to player's level
+  const opp = { name:'Rival'+rand(10,99), level: Math.max(1, player.level + rand(-1,1)), strength: Math.max(1, player.strength + rand(-1,2)) };
+  $('#p2Name').textContent = opp.name;
+  $('#p2Str').textContent = opp.strength;
+  $('#p2Lvl').textContent = opp.level;
+  // rolls
+  const pRoll = rand(1,20) + player.strength;
+  const oRoll = rand(1,20) + opp.strength;
+  const dmg = Math.max(1, Math.abs(pRoll - oRoll));
+  let winner = pRoll >= oRoll ? 'player' : 'opponent';
+  if(winner === 'player'){
+    const reward = Math.ceil(dmg * (bloodMoonActive() ? 3 : 2));
+    player.prey += reward;
+    player.xp += 18;
+    player.trophies.push({type:'pvp_win', ts: nowTs()});
+    incrementQuest('pvp_win', 1);
+    $('#battleLog').textContent = `Victory! You won ${reward} $PREY. Opponent: ${opp.name} (${opp.level} L).`;
+    playTone(980,0.12,'triangle');
+  } else {
+    const loss = Math.ceil(dmg * (bloodMoonActive() ? 2 : 1));
+    player.prey = Math.max(0, player.prey - loss);
+    $('#battleLog').textContent = `Defeat… You lost ${loss} $PREY. Opponent: ${opp.name} (${opp.level} L).`;
+    playTone(140,0.16,'sine');
+  }
+  player.lastActions.push({action:'pvp', winner, opponent:opp, dmg, ts:nowTs()});
+  pushMatchHistory({ winner, opponent: opp, dmg, ts: nowTs() });
+  checkLevelUp();
+  autoUnlockCodex();
+  render();
+  $('#fightBtn').disabled = false;
+  savePlayer();
+}
+
+function pushMatchHistory(match){
+  const hist = loadJSON(MATCH_KEY, []);
+  hist.unshift(match);
+  if(hist.length>20) hist.pop();
+  saveJSON(MATCH_KEY, hist);
+  renderMatchHistory();
+}
+
+function renderMatchHistory(){
+  const hist = loadJSON(MATCH_KEY, []);
+  const el = $('#matchHistory');
+  if(!hist.length){ el.textContent = 'No matches yet.'; return; }
+  el.innerHTML = hist.slice(0,8).map(m => {
+    const who = m.winner === 'player' ? 'Victory' : 'Defeat';
+    const name = m.opponent?.name || 'Rival';
+    const date = new Date(m.ts).toLocaleString();
+    return `${date} — ${who} vs ${name} (dmg ${m.dmg})`;
+  }).join('\n');
+}
+
+/* ---------------- Quests & Achievements ---------------- */
+
+function initQuests(){
+  const raw = loadJSON(QUEST_KEY, null);
+  if(raw) return raw;
+  const q = DEFAULT_QUESTS.map(x => ({...x, progress:0, done:false, lastClaim:null}));
+  saveJSON(QUEST_KEY, q);
+  return q;
+}
+
+function renderQuests(){
+  const q = initQuests();
+  const el = $('#questsList');
+  el.innerHTML = '';
+  q.forEach(task => {
+    const d = document.createElement('div');
+    d.className = 'item';
+    d.innerHTML = `<div><div style="font-weight:800">${task.title}</div><div class="small">Progress: ${task.progress}/${task.target}</div></div>`;
+    const btn = document.createElement('button');
+    btn.textContent = task.done ? 'Claimed' : (task.progress >= task.target ? 'Claim' : 'Track');
+    btn.disabled = task.done;
+    btn.addEventListener('click', ()=> {
+      if(task.progress >= task.target && !task.done){
+        player.prey += (task.reward.prey || 0);
+        task.done = true; task.lastClaim = nowTs();
+        saveJSON(QUEST_KEY, q); savePlayer(); renderQuests(); render(); log(`Quest '${task.title}' claimed. +${task.reward.prey || 0} $PREY`);
+        playTone(880,0.09,'triangle');
+      } else {
+        log(`Progress: ${task.progress}/${task.target} for '${task.title}'`);
       }
-      // Otherwise, emulate server response locally
-      return { ok:true, result: localApply(action, extra) };
-    }
-
-    // Local server-side logic (for demo mode)
-    function localApply(action, extra){
-      if (action==='hunt'){
-        const base = rand(2,9) * player.strength;
-        const bonus = player.role==='wolf' ? Math.ceil(base*0.15) : 0;
-        const gained = base + bonus;
-        player.prey += gained; player.xp += 12;
-        player.lastActions.push({action:'hunt', gained, ts:Date.now()});
-        while(player.xp >= player.level*100){ player.xp -= player.level*100; player.level++; }
-        save(player); return {gained, bonus, prey:player.prey, level:player.level}
-      }
-      if(action==='train'){
-        if (player.prey >=20){ player.prey -=20; player.strength +=1; player.xp +=6; save(player); return {ok:true, prey:player.prey, strength:player.strength} }
-        return {ok:false, reason:'Not enough $PREY'}
-      }
-      if(action==='pvp'){
-        // Simulate an opponent
-        const opp = { name:'Rival'+rand(10,99), level: Math.max(1, player.level+rand(-1,1)), strength: Math.max(1, player.strength+rand(-1,2)) };
-        const pRoll = rand(1,20) + player.strength;
-        const oRoll = rand(1,20) + opp.strength;
-        const dmg = Math.max(1, Math.abs(pRoll - oRoll));
-        let winner = pRoll>=oRoll ? 'player' : 'opponent';
-        if (winner==='player'){ player.prey += Math.ceil(dmg*2); player.xp += 18 } else { player.prey = Math.max(0, player.prey - Math.ceil(dmg)); }
-        while(player.xp >= player.level*100){ player.xp -= player.level*100; player.level++; }
-        save(player);
-        return {winner, opponent:opp, prey:player.prey, dmg}
-      }
-      return {ok:false}
-    }
-
-    // Actions
-    $('#huntBtn').addEventListener('click', async ()=>{
-      $('#huntBtn').disabled = true; log('Hunting...');
-      const res = await postAction('hunt');
-      if(res.error){ log('Error: '+res.message) } else {
-        const r = res.result || res;
-        log(`You hunted and gained ${r.gained} prey (bonus ${r.bonus || 0}). Total $PREY: ${r.prey}`);
-        if (isTG) showMainButtonWithData({action:'hunt', gained:r.gained});
-      }
-      $('#huntBtn').disabled = false; render();
     });
+    d.appendChild(btn);
+    el.appendChild(d);
+  });
+}
 
-    $('#trainBtn').addEventListener('click', async ()=>{
-      $('#trainBtn').disabled = true; log('Training...');
-      const res = await postAction('train');
-      if(res.error) log('Error: '+res.message); else {
-        const r = res.result || res;
-        if(r.ok===false) log(r.reason || 'Could not train.'); else log(`Training done. STR is now ${r.strength}. $PREY: ${r.prey}`);
-        if (isTG) showMainButtonWithData({action:'train'});
-      }
-      $('#trainBtn').disabled = false; render();
-    });
+function incrementQuest(key, by){
+  const q = initQuests();
+  let changed=false;
+  q.forEach(task => {
+    if(task.progressKey === key && !task.done){ task.progress += by; if(task.progress > task.target) task.progress = task.target; changed=true; }
+  });
+  if(changed) saveJSON(QUEST_KEY, q);
+}
 
-    $('#profileBtn').addEventListener('click', ()=>{ log(`Profile → L${player.level} STR${player.strength} • $PREY ${player.prey} • Role ${player.role}`) });
+/* ---------------- Achievements ---------------- */
 
-    // PvP flow
-    $('#pvpBtn').addEventListener('click', ()=>{
-      $('#pvpModal').classList.add('open'); $('#p1Name').textContent = player.name; $('#p1Str').textContent = player.strength; $('#p1Lvl').textContent = player.level; $('#p2Name').textContent = '—'; $('#p2Str').textContent='?'; $('#p2Lvl').textContent='?'; $('#battleLog').textContent='Ready to match...';
-    });
-    $('#closePvp').addEventListener('click', ()=>$('#pvpModal').classList.remove('open'));
-    $('#cancelFight').addEventListener('click', ()=>$('#pvpModal').classList.remove('open'));
-    $('#fightBtn').addEventListener('click', async ()=>{
-      $('#fightBtn').disabled = true; $('#battleLog').textContent='Matching and fighting...';
-      const res = await postAction('pvp');
-      const r = res.result || res;
-      if(r.winner==='player') $('#battleLog').textContent = `Victory! You won ${Math.ceil(r.dmg*2)} $PREY. Opponent: ${r.opponent.name}`; else $('#battleLog').textContent = `Defeat… You lost ${Math.ceil(r.dmg)} $PREY. Opponent: ${r.opponent.name}`;
-      render(); $('#fightBtn').disabled = false;
-    });
-
-    // Inventory and Shop (client-side only)
-    function renderInventory(){ const el = $('#inventoryList'); el.innerHTML=''; if(player.inv.length===0) el.textContent='Empty'; else player.inv.forEach(i=>{ const d=document.createElement('div'); d.textContent=`${i.name} x${i.qty}`; el.appendChild(d) }) }
-    const SHOP = [ {id:'potion',name:'Strength Potion',cost:30,desc:'+1 STR temporary'}, {id:'shroud',name:'Shadow Shroud',cost:120,desc:'+10% hunt bonus'} ];
-    function renderShop(){ const el = $('#shopList'); el.innerHTML=''; SHOP.forEach(s=>{ const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.marginBottom='8px'; row.innerHTML = `<div><div style="font-weight:700">${s.name}</div><div class="small">${s.desc}</div></div>`; const btn = document.createElement('button'); btn.textContent='Buy '+s.cost; btn.addEventListener('click', ()=>{ if(player.prey>=s.cost){ player.prey-=s.cost; player.inv.push({name:s.name,qty:1}); save(player); render(); log('Purchased '+s.name) } else log('Not enough $PREY'); }); row.appendChild(btn); el.appendChild(row); }) }
-
-    // Leaderboard (local mock)
-    function renderLeaderboard(){ const el = $('#leaderboard'); el.innerHTML=''; const lb = JSON.parse(localStorage.getItem('eh_leaderboard')||'[]'); const combined = [{name:player.name,prey:player.prey}].concat(lb).sort((a,b)=>b.prey-a.prey).slice(0,6);
-      combined.forEach((x,i)=>{ const row=document.createElement('div'); row.className='item'; row.innerHTML=`<div>#${i+1} ${x.name}</div><div>${x.prey} $PREY</div>`; el.appendChild(row) });
+function renderAchievements(){
+  const el = $('#achievementsList');
+  const unlocked = loadJSON(ACH_KEY, []);
+  el.innerHTML = '';
+  ACHIEVEMENTS.forEach(a => {
+    const done = unlocked.includes(a.id) || a.check(player);
+    if(done && !unlocked.includes(a.id)){ // auto-add
+      unlocked.push(a.id); saveJSON(ACH_KEY, unlocked); player.unlockedCodex = player.unlockedCodex || []; // keep codex synergy
     }
+    const d = document.createElement('div');
+    d.className = 'item';
+    d.innerHTML = `<div style="${done ? 'color:var(--pos);font-weight:800' : ''}">${a.title}</div><div>${done ? 'Unlocked' : 'Locked'}</div>`;
+    el.appendChild(d);
+  });
+}
 
-    // Simple leaderboard update on save
-    function updateLeaderboard(){ let lb = JSON.parse(localStorage.getItem('eh_leaderboard')||'[]'); lb = lb.filter(x=>x.name!==player.name); lb.push({name:player.name,prey:player.prey}); localStorage.setItem('eh_leaderboard', JSON.stringify(lb)); }
+/* ---------------- Codex (lore) ---------------- */
 
-    // Utility
-    function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function autoUnlockCodex(){
+  CODEX.forEach(entry => {
+    if(entry.unlock(player) && !player.unlockedCodex.includes(entry.id)){
+      player.unlockedCodex.push(entry.id);
+      log(`Codex unlocked: ${entry.title}`);
+      playTone(720,0.09,'sine');
+    }
+  });
+}
 
-    // Export / Reset
-    $('#exportBtn').addEventListener('click', ()=>{ navigator.clipboard.writeText(JSON.stringify(player)); log('Exported to clipboard') });
-    $('#resetBtn').addEventListener('click', ()=>{ if(confirm('Reset local progress?')){ clearSave(); player = { name: player.name, level:1, strength:1, prey:0, xp:0, role:'wolf', inv:[] }; save(player); render(); log('Local reset done') } });
+function openCodex(){
+  const modal = document.createElement('div');
+  modal.style.position='fixed'; modal.style.inset='0'; modal.style.background='rgba(0,0,0,.6)'; modal.style.display='flex'; modal.style.alignItems='center'; modal.style.justifyContent='center'; modal.style.zIndex='2000';
+  const box = document.createElement('div'); box.style.background='var(--card)'; box.style.padding='18px'; box.style.borderRadius='12px'; box.style.maxWidth='720px'; box.style.width='94%';
+  box.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><strong>Codex</strong><button id="closeCodex">Close</button></div><div style="margin-top:12px" id="codexContent"></div>`;
+  modal.appendChild(box); document.body.appendChild(modal);
+  const content = box.querySelector('#codexContent');
+  CODEX.forEach(c=>{
+    const unlocked = player.unlockedCodex.includes(c.id);
+    const el = document.createElement('div'); el.style.marginBottom='10px';
+    el.innerHTML = `<div style="font-weight:800">${c.title} ${unlocked ? '<span class="achieved">✓</span>' : ''}</div><div class="small">${unlocked ? c.text : 'Locked — meet the requirements to unlock.'}</div>`;
+    content.appendChild(el);
+  });
+  box.querySelector('#closeCodex').addEventListener('click', ()=>{ document.body.removeChild(modal) });
+}
 
-    // Role change
-    $('#roleSel').addEventListener('change', (e)=>{ player.role = e.target.value; save(player); render(); log('Role set to '+player.role) });
+/* ---------------- Shop & Inventory ---------------- */
 
-    // Show Telegram MainButton to send action data to bot
-    function showMainButtonWithData(obj){ if(!isTG) return; tg.MainButton.setText('Send Action to Bot'); tg.MainButton.show(); tg.MainButton.onClick(()=>{ tg.sendData(JSON.stringify(obj)); tg.MainButton.hide(); tg.HapticFeedback?.notificationOccurred('success'); }) }
+function renderShop(){
+  const el = $('#shopList'); el.innerHTML = '';
+  SHOP_ITEMS.forEach(it=>{
+    const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.marginBottom='8px';
+    row.innerHTML = `<div><div style="font-weight:800">${it.name}</div><div class="small">${it.desc}</div></div>`;
+    const btn = document.createElement('button'); btn.textContent = 'Buy '+(it.cost||0); btn.addEventListener('click', ()=>{
+      if(player.prey >= it.cost){
+        player.prey -= it.cost;
+        if(it.apply) it.apply(player);
+        player.lastActions.push({action:'buy', item: it.id, ts: nowTs()});
+        savePlayer(); render(); log(`Purchased ${it.name}`); playTone(660,0.08,'triangle');
+      } else { log('Not enough $PREY'); playTone(220,0.09,'sine') }
+    });
+    row.appendChild(btn); el.appendChild(row);
+  });
+}
 
-    // Save before unload
-    window.addEventListener('beforeunload', ()=>{ save(player); updateLeaderboard(); });
+function renderInventory(){
+  const el = $('#inventoryList'); el.innerHTML = '';
+  if(!player.inv || player.inv.length === 0){ el.textContent = 'Empty'; return; }
+  player.inv.forEach(it=>{
+    const d = document.createElement('div'); d.textContent = `${it.name} x${it.qty || 1}`; el.appendChild(d);
+  });
+}
 
-    // Initial render
-    save(player); render();
+/* ---------------- Leaderboard (local) ---------------- */
 
-    // If inside Telegram, set avatar and name from init data
-    if(isTG){ const u = tg.initDataUnsafe?.user; if(u){ if(u.photo_url) document.getElementById('avatar').src = u.photo_url; player.name = player.name || u.first_name; save(player); render(); } }
+function updateLeaderboard(){
+  const lb = loadJSON(LB_KEY, []);
+  const filtered = lb.filter(x => x.name !== player.name);
+  filtered.push({name: player.name, prey: player.prey});
+  filtered.sort((a,b) => b.prey - a.prey);
+  saveJSON(LB_KEY, filtered.slice(0,30));
+  renderLeaderboard();
+}
 
-  </script></body>
+function renderLeaderboard(){
+  const el = $('#leaderboard'); el.innerHTML = '';
+  const lb = loadJSON(LB_KEY, []);
+  if(lb.length === 0){ el.textContent = 'No leaderboard yet'; return; }
+  lb.slice(0,6).forEach((x,i) => {
+    const row = document.createElement('div'); row.className='item'; row.innerHTML = `<div>#${i+1} ${x.name}</div><div>${x.prey} $PREY</div>`; el.appendChild(row);
+  });
+}
+
+/* ---------------- Misc & UI ---------------- */
+
+function log(txt){ $('#log').textContent = txt; }
+function disableButtons(val){ ['#huntBtn','#trainBtn','#pvpBtn','#questsBtn','#codexBtn'].forEach(s=>{ const b=$(s); if(b) b.disabled = val; }) }
+function showMainBtnIfTG(obj){
+  if(!isTG) return;
+  tg.MainButton.setText('Send Action to Bot');
+  tg.MainButton.show();
+  tg.MainButton.onClick(()=>{ tg.sendData(JSON.stringify(obj)); tg.MainButton.hide(); tg.HapticFeedback?.notificationOccurred('success'); });
+}
+
+function checkLevelUp(){
+  while(player.xp >= player.level * 100){
+    player.xp -= player.level * 100;
+    player.level += 1;
+    player.trophies.push({type:'level_up', title: `Reached L${player.level}`, ts: nowTs()});
+    log(`Level up! You are now level ${player.level}`);
+    playTone(1200,0.12,'sine');
+    // maybe auto-unlock codex
+    autoUnlockCodex();
+  }
+}
+
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1) }
+
+/* ----------------- Event / Moon visuals ----------------- */
+
+function updateMoonVisual(){
+  const moon = document.getElementById('moon');
+  const active = bloodMoonActive();
+  if(active){ moon.style.opacity = 1; moon.classList.add('glow-bg'); document.body.style.background = 'radial-gradient(1200px 600px at 75% -15%, rgba(255,59,92,0.06), transparent 50%), linear-gradient(180deg,#0a0308,#0b0710)'; }
+  else { moon.style.opacity = 0.45; moon.classList.remove('glow-bg'); document.body.style.background = 'radial-gradient(1200px 600px at 75% -15%, rgba(255,59,92,0.02), transparent 50%), linear-gradient(180deg,#020205,#07060a)'; }
+  // show small tooltip info
+  const moonC = document.getElementById('moonC');
+  moonC.title = active ? 'Blood Moon is active — double rewards!' : 'Blood Moon is dormant. It cycles every 3 days (demo rule).';
+}
+
+/* ----------------- Event toggles & schedule UI ----------------- */
+
+document.getElementById('toggleBlood').addEventListener('click', ()=>{
+  const cur = bloodMoonActive();
+  setBloodMoon(!cur);
+  log('Blood Moon ' + (!cur ? 'enabled' : 'disabled') + ' (manual override)');
+  render();
+});
+document.getElementById('moon').addEventListener('click', ()=>{
+  const cur = bloodMoonActive();
+  setBloodMoon(!cur);
+  log('Blood Moon toggled (manual).');
+  render();
+});
+
+/* ---------------- Button wiring ---------------- */
+
+$('#huntBtn').addEventListener('click', doHunt);
+$('#trainBtn').addEventListener('click', doTrain);
+$('#pvpBtn').addEventListener('click', quickPvp);
+$('#closePvp').addEventListener('click', ()=> $('#pvpModal').classList.remove('open'));
+$('#cancelFight').addEventListener('click', ()=> $('#pvpModal').classList.remove('open'));
+$('#fightBtn').addEventListener('click', fight);
+$('#profileBtn').addEventListener('click', ()=> log(`Profile → L${player.level} STR${player.strength} • $PREY ${player.prey} • Role ${player.role}`));
+$('#exportBtn').addEventListener('click', ()=>{ navigator.clipboard.writeText(JSON.stringify(player)); log('Exported to clipboard') });
+$('#resetBtn').addEventListener('click', ()=>{ if(confirm('Reset local progress?')){ localStorage.removeItem(KEY); player = { name: player.name, telegram_id: player.telegram_id, level:1, strength:1, prey:0, xp:0, role:'wolf', inv:[], unlockedCodex:[], trophies:[], lastActions:[]}; saveJSON(KEY, player); render(); log('Local reset done') } });
+$('#roleSel').addEventListener('change', (e)=>{ player.role = e.target.value; savePlayer(); render(); log('Role set to '+player.role) });
+$('#questsBtn').addEventListener('click', ()=> { const modal = document.createElement('div'); modal.style.position='fixed'; modal.style.inset='0'; modal.style.background='rgba(0,0,0,.6)'; modal.style.display='flex'; modal.style.alignItems='center'; modal.style.justifyContent='center'; modal.style.zIndex='2000'; const box=document.createElement('div'); box.style.background='var(--card)'; box.style.padding='18px'; box.style.borderRadius='12px'; box.style.maxWidth='720px'; box.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><strong>Quests</strong><button id="closeQ">Close</button></div><div style="margin-top:12px" id="qcontent"></div>`; modal.appendChild(box); document.body.appendChild(modal); const qcontent = box.querySelector('#qcontent'); initQuests().forEach(t=>{ const d=document.createElement('div'); d.style.marginBottom='10px'; d.innerHTML=`<div style="font-weight:800">${t.title} ${t.done?'<span class=\"achieved\">✓</span>':''}</div><div class=\"small\">Progress: ${t.progress}/${t.target}</div>`; qcontent.appendChild(d); }); box.querySelector('#closeQ').addEventListener('click', ()=>document.body.removeChild(modal)); });
+$('#codexBtn').addEventListener('click', openCodex);
+
+// Mute toggle
+const muteBtn = $('#muteBtn');
+muteBtn.addEventListener('click', ()=>{
+  audioEnabled = !audioEnabled;
+  muteBtn.textContent = audioEnabled ? '🔊' : '🔇';
+});
+
+/* ---------------- On load initializers ---------------- */
+
+function init(){
+  // ensure quest structure
+  initQuests();
+  // achievements initial check
+  renderAchievements();
+  // codex unlocks if conditions met
+  autoUnlockCodex();
+  render();
+}
+init();
+
+/* -------------- small helpers for quests --------------- */
+
+function initQuests(){
+  let q = loadJSON(QUEST_KEY, null);
+  if(q) return q;
+  q = DEFAULT_QUESTS.map(x => ({...x, progress:0, done:false, lastClaim:null}));
+  saveJSON(QUEST_KEY, q);
+  return q;
+}
+
+function incrementQuest(progressKey, amount){
+  const q = initQuests();
+  let changed=false;
+  q.forEach(t => {
+    if(t.progressKey === progressKey && !t.done){
+      t.progress += amount; if(t.progress > t.target) t.progress = t.target; if(t.progress >= t.target) t.done = true; changed = true;
+    }
+  });
+  if(changed) saveJSON(QUEST_KEY, q);
+}
+
+/* Save on unload */
+window.addEventListener('beforeunload', ()=>{ savePlayer(); saveJSON(ACH_KEY, loadJSON(ACH_KEY, [])); updateLeaderboard(); });
+
+</script>
+</body>
 </html>

@@ -1,611 +1,243 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Eternal Hunt — Complete (No Firebase)</title>
-<style>
-:root{
-  --bg:#05040a; --card:#0f1116; --muted:#98a0a6; --text:#eef0f6;
-  --accent:#ff3b5c; --accent-2:#ff8a9b; --success:#2ecc71;
-}
-*{box-sizing:border-box}
-body{
-  margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:linear-gradient(180deg,#02020a,#0b0b12);
-  color:var(--text); -webkit-font-smoothing:antialiased;
-}
-.wrap{max-width:1100px;margin:18px auto;padding:18px}
-header{display:flex;gap:12px;align-items:center}
-.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#06060a}
-h1{margin:0;font-size:20px}
-.muted{color:var(--muted);font-size:13px}
-
-/* panels */
-.panel{margin-top:14px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.03);background:linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.005));}
-.panel-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer}
-.panel-title{display:flex;gap:10px;align-items:center}
-.panel-body{padding:14px;display:none}
-.panel.open .panel-body{display:block}
-
-/* bits */
-.row{display:flex;gap:8px;align-items:center}
-.stat{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:8px;font-weight:700}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.btn{padding:10px 12px;border-radius:10px;border:0;background:#111;color:var(--text);cursor:pointer;font-weight:800;transition:transform .12s}
-.btn:active{transform:scale(.98)}
-.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#06060a;box-shadow:0 8px 30px rgba(255,59,92,.08)}
-.ghost{background:transparent;border:1px solid rgba(255,255,255,.04)}
-
-/* log */
-.log{margin-top:12px;padding:12px;border-radius:10px;background:#06060a;min-height:72px;border:1px solid rgba(255,255,255,.02);white-space:pre-wrap}
-
-/* shop */
-.shop-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px}
-.shop-row + .shop-row{margin-top:6px}
-
-/* codex */
-.codex-entry{opacity:0;transform:translateY(8px);animation:codexFade .6s forwards;margin-bottom:8px}
-@keyframes codexFade{to{opacity:1;transform:none}}
-.typing{border-right:2px solid var(--accent);white-space:nowrap;overflow:hidden;display:inline-block}
-.glow{color:var(--accent);text-shadow:0 0 10px rgba(255,59,92,.12)}
-
-/* small */
-.small{font-size:13px;color:var(--muted)}
-.center{display:flex;align-items:center;justify-content:center}
-.flash-green{animation:flashGreen .6s}
-@keyframes flashGreen{0%{background:rgba(46,204,113,.12)}100%{background:transparent}}
-.flash-red{animation:flashRed .6s}
-@keyframes flashRed{0%{background:rgba(255,59,92,.12)}100%{background:transparent}}
-
-@media(max-width:980px){
-  .row{flex-direction:column;align-items:flex-start}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eternal Hunt Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    h1 { color: #ff4444; margin: 10px 0; }
+    .panel { display: none; padding: 20px; }
+    .panel.active { display: block; }
+    .nav { display: flex; justify-content: center; background: #222; padding: 10px; }
+    .nav button {
+      margin: 0 5px; padding: 10px 15px;
+      border-radius: 8px; border: none; cursor: pointer;
+      background: #333; color: #eee;
+    }
+    .nav button.active { background: #ff4444; }
+    .quest.completed { text-decoration: line-through; color: #888; }
+    .event-active { animation: glow 1s infinite alternate; }
+    @keyframes glow { from { text-shadow: 0 0 5px #f00; } to { text-shadow: 0 0 20px #f00; } }
+    .rewarded-ad { margin-top: 20px; border: 2px dashed #444; padding: 15px; border-radius: 10px; }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="logo">EH</div>
-    <div>
-      <h1>🐺 Eternal Hunt — Complete</h1>
-      <div class="muted">Full playable client (local storage). Sounds & codex reveals included.</div>
-    </div>
-  </header>
+  <h1>🐺 Eternal Hunt</h1>
 
-  <!-- Profile Panel (always top) -->
-  <div class="panel open" id="profilePanel">
-    <div class="panel-header">
-      <div class="panel-title"><strong>👤 Profile Settings</strong></div>
-      <div class="small">Set your Discord username & role</div>
-    </div>
-    <div class="panel-body">
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div style="flex:1">
-          <div class="small">Discord Username</div>
-          <input id="usernameInput" placeholder="Wolf#1234" style="width:100%;padding:8px;border-radius:8px;border:0;background:#0b0b12;color:var(--text)"/>
-        </div>
-        <div style="width:160px">
-          <div class="small">Role</div>
-          <select id="roleSelect" style="width:100%;padding:8px;border-radius:8px;border:0;background:#0b0b12;color:var(--text)">
-            <option value="wolf">Wolf 🐺</option>
-            <option value="hunter">Hunter 🏹</option>
-          </select>
-        </div>
-        <div style="display:flex;align-items:flex-end;gap:8px">
-          <button class="primary" onclick="saveProfile()">Save Profile</button>
-          <button class="btn ghost" onclick="resetProgress()">Reset</button>
-        </div>
-      </div>
-      <div style="margin-top:12px" class="small">Profile is saved locally. Use the Save button before playing to register name & role for leaderboard.</div>
-    </div>
+  <!-- Navigation -->
+  <div class="nav">
+    <button onclick="openPanel('profile')" class="active">Profile</button>
+    <button onclick="openPanel('play')">Play</button>
+    <button onclick="openPanel('quests')">Quests</button>
+    <button onclick="openPanel('inventory')">Inventory</button>
+    <button onclick="openPanel('shop')">Relic Shop</button>
+    <button onclick="openPanel('codex')">Codex</button>
+    <button onclick="openPanel('leaderboard')">Leaderboard</button>
   </div>
 
-  <!-- Controls / Play Panel -->
-  <div class="panel open" id="playPanel">
-    <div class="panel-header" onclick="togglePanel('playPanel')">
-      <div class="panel-title"><strong>🎮 Play</strong></div>
-      <div class="small">Hunt, Train, PvP, Daily & Rewarded Ads</div>
-    </div>
-    <div class="panel-body">
-      <div class="row" id="topStats">
-        <div class="stat">Name: <span id="displayName">—</span></div>
-        <div class="stat">Role: <span id="displayRole">—</span></div>
-        <div class="stat">Level <span id="displayLevel">1</span></div>
-        <div class="stat">STR <span id="displayStrength">1</span></div>
-        <div class="stat">$PREY <span id="displayPrey">0</span></div>
-      </div>
+  <!-- Profile Panel -->
+  <div id="profile" class="panel active">
+    <h2>Profile Settings</h2>
+    <input id="usernameInput" placeholder="Enter Discord Username" />
+    <br/><br/>
+    <select id="roleSelect">
+      <option value="wolf">🐺 Wolf</option>
+      <option value="hunter">🏹 Hunter</option>
+    </select>
+    <br/><br/>
+    <button onclick="saveProfile()">Save Profile</button>
+    <p id="profileStatus"></p>
+  </div>
 
-      <div class="controls">
-        <button id="btnHunt" class="primary" onclick="doHunt()">🦌 Hunt</button>
-        <button onclick="doTrain()">💪 Train (20 $PREY)</button>
-        <button onclick="openPvpPanel()">⚔️ PvP</button>
-        <button onclick="startRewardedAd()">🎥 Watch Ad (+50 $PREY)</button>
-        <button onclick="claimDaily()">☀️ Daily (+25)</button>
-        <button id="muteBtn" class="btn ghost" onclick="toggleMute()">🔊</button>
-      </div>
+  <!-- Play Panel -->
+  <div id="play" class="panel">
+    <h2>Play</h2>
+    <button onclick="hunt()">Hunt Prey</button>
+    <button onclick="train()">Train (+Strength)</button>
+    <button onclick="pvp()">Quick PvP</button>
+    <p id="gameResult"></p>
+    <p id="bloodMoon"></p>
 
-      <div id="mainLog" class="log">Welcome to Eternal Hunt — save profile then play. Click any button once to enable sound in some browsers.</div>
+    <!-- Rewarded Ad Placeholder -->
+    <div class="rewarded-ad">
+      <p>🎥 Watch an ad to earn bonus $PREY!</p>
+      <button onclick="watchAd()">Watch Ad</button>
+      <p id="adResult"></p>
     </div>
   </div>
 
   <!-- Quests Panel -->
-  <div class="panel" id="questsPanel">
-    <div class="panel-header" onclick="togglePanel('questsPanel')">
-      <div class="panel-title"><strong>📜 Quests</strong></div>
-      <div class="small">Role-based questlines (10 each). Complete to earn rewards & codex.</div>
-    </div>
-    <div class="panel-body">
-      <div id="questsContainer" class="small"></div>
-    </div>
+  <div id="quests" class="panel">
+    <h2>Quests</h2>
+    <ul id="questList"></ul>
   </div>
 
-  <!-- Inventory & Shop Panel -->
-  <div class="panel" id="shopPanel">
-    <div class="panel-header" onclick="togglePanel('shopPanel')">
-      <div class="panel-title"><strong>🎒 Inventory & 🛡 Shop</strong></div>
-      <div class="small">Buy relics using $PREY</div>
-    </div>
-    <div class="panel-body">
-      <strong>Inventory</strong>
-      <div id="inventoryList" class="small" style="margin-top:8px">Empty</div>
+  <!-- Inventory Panel -->
+  <div id="inventory" class="panel">
+    <h2>Inventory</h2>
+    <ul id="inventoryList"></ul>
+  </div>
 
-      <div style="margin-top:12px"><strong>Relic Shop</strong></div>
-      <div style="margin-top:8px" class="small">
-        <div class="shop-row"><div>Alpha Fang (Wolf) — 120 $PREY</div><div><button onclick="buyRelic('Alpha Fang',120)">Buy</button></div></div>
-        <div class="shop-row"><div>Hunter's Bow (Hunter) — 120 $PREY</div><div><button onclick="buyRelic(\"Hunter's Bow\",120)">Buy</button></div></div>
-        <div class="shop-row"><div>Moon Totem — 160 $PREY</div><div><button onclick="buyRelic('Moon Totem',160)">Buy</button></div></div>
-        <div class="shop-row"><div>Cloak of Shadows — 160 $PREY</div><div><button onclick="buyRelic('Cloak of Shadows',160)">Buy</button></div></div>
-        <div id="shopMessage" class="small" style="margin-top:8px"></div>
-      </div>
-    </div>
+  <!-- Shop Panel -->
+  <div id="shop" class="panel">
+    <h2>Relic Shop</h2>
+    <button onclick="buyItem('Potion',20)">Potion (20 $PREY)</button>
+    <button onclick="buyItem('Relic Shard',100)">Relic Shard (100 $PREY)</button>
+    <button onclick="buyItem('Wolf Totem',200)">Wolf Totem (200 $PREY)</button>
+    <p id="shopResult"></p>
   </div>
 
   <!-- Codex Panel -->
-  <div class="panel" id="codexPanel">
-    <div class="panel-header" onclick="togglePanel('codexPanel')">
-      <div class="panel-title"><strong>📖 Codex</strong></div>
-      <div class="small">Lore entries unlocked as you progress</div>
-    </div>
-    <div class="panel-body">
-      <div id="codexBox" class="small">Complete quests to reveal lore entries.</div>
-      <div style="margin-top:8px"><button onclick="openCodexModal()">Open Codex</button></div>
-    </div>
+  <div id="codex" class="panel">
+    <h2>Lore Codex</h2>
+    <div id="codexEntries"></div>
   </div>
 
   <!-- Leaderboard Panel -->
-  <div class="panel" id="leaderPanel">
-    <div class="panel-header" onclick="togglePanel('leaderPanel')">
-      <div class="panel-title"><strong>🏆 Leaderboard</strong></div>
-      <div class="small">Local leaderboard demo (stored in localStorage)</div>
-    </div>
-    <div class="panel-body">
-      <ol id="leaderboardList" class="small"></ol>
-      <div style="margin-top:8px" class="small">Tip: open the page in other browsers/devices and save profile to simulate multiple players on the leaderboard.</div>
-    </div>
+  <div id="leaderboard" class="panel">
+    <h2>Leaderboard</h2>
+    <ol id="leaderboardList"></ol>
   </div>
 
-  <!-- PvP Modal -->
-  <div id="pvpModal" class="modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:200">
-    <div style="background:var(--card);padding:16px;border-radius:12px;width:90%;max-width:560px;border:1px solid rgba(255,255,255,.03)">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>PvP Arena</strong><button onclick="closePvpModal()">Close</button>
-      </div>
-      <div id="pvpBody" style="margin-top:12px;">
-        <div class="small">Quick Match vs Rival</div>
-        <div style="margin-top:12px"><button class="primary" onclick="doPvp()">Fight</button></div>
-        <pre id="pvpLog" class="log" style="margin-top:12px"></pre>
-      </div>
-    </div>
-  </div>
+  <!-- Sound Effects -->
+  <audio id="huntSound" src="https://actions.google.com/sounds/v1/animals/wolf_howl.ogg"></audio>
+  <audio id="trainSound" src="https://actions.google.com/sounds/v1/human_activities/weights_lift.ogg"></audio>
+  <audio id="pvpSound" src="https://actions.google.com/sounds/v1/impacts/metal_clang.ogg"></audio>
 
-  <!-- Codex modal -->
-  <div id="codexModal" class="modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:210">
-    <div style="background:var(--card);padding:18px;border-radius:12px;width:94%;max-width:720px;border:1px solid rgba(255,255,255,.03)">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>Codex</strong>
-        <div><button onclick="closeCodexModal()">Close</button></div>
-      </div>
-      <div id="codexContent" style="margin-top:12px;"></div>
-    </div>
-  </div>
+  <!-- Firebase Setup -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  <!-- Ad modal -->
-  <div id="adModal" class="modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:220">
-    <div style="background:var(--card);padding:18px;border-radius:12px;width:94%;max-width:520px;border:1px solid rgba(255,255,255,.03);text-align:center">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>Sponsored Reward</strong>
-        <button onclick="closeAdModal()">Cancel</button>
-      </div>
-      <div id="adBody" style="margin-top:12px" class="small center">Ad loading...</div>
-    </div>
-  </div>
+    // ✅ New Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBz11XDhnqNwMyNUjqFpoC8lppEgCP-mew",
+      authDomain: "eternal-hunt-game-e48fb.firebaseapp.com",
+      projectId: "eternal-hunt-game-e48fb",
+      storageBucket: "eternal-hunt-game-e48fb.firebasestorage.app",
+      messagingSenderId: "87971567607",
+      appId: "1:87971567607:web:2b4401b8e8672436ea80f2"
+    };
 
-</div>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-<!-- Sounds -->
-<audio id="s_wolf" src="https://actions.google.com/sounds/v1/animals/wolf_howl.ogg"></audio>
-<audio id="s_bow" src="https://actions.google.com/sounds/v1/foley/bow_pull_release.ogg"></audio>
-<audio id="s_train" src="https://actions.google.com/sounds/v1/impacts/metal_thud.ogg"></audio>
-<audio id="s_win" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
-<audio id="s_lose" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
-<audio id="s_ad" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+    // Game State
+    let prey=0,strength=1,level=1,xp=0;
+    let role="wolf",username="Unknown";
+    let inventory=[];
+    let codex={
+      wolf:[
+        {level:1,text:"The pack awakens under the crimson moon."},
+        {level:5,text:"Wolves hunt together, bound by blood."},
+        {level:10,text:"Legends say the Eternal Alpha shall rise."}
+      ],
+      hunter:[
+        {level:1,text:"Hunters begin their pursuit of the wolves."},
+        {level:5,text:"Steel and courage sharpen under starlight."},
+        {level:10,text:"The Eternal Hunt tests every hunter’s soul."}
+      ]
+    };
 
-<script>
-/* ===========================
-   Eternal Hunt — Complete (local)
-   - Role-specific 10 quests
-   - Codex reveals with animation
-   - Sounds + mute
-   - Rewarded ad placeholder
-   - Relic shop & inventory
-   - Local leaderboard
-   =========================== */
-
-const STORAGE_KEY = 'eternal_hunt_full_v1';
-let state = loadState() || {
-  username: '',
-  role: 'wolf',
-  prey: 0,
-  strength: 1,
-  level: 1,
-  xp: 0,
-  inventory: [],
-  quests: null,
-  codexUnlocked: []
-};
-let muted = false;
-let adTimer = null;
-
-/* ----- Role-based quests (10 each) ----- */
-const WOLF_QUESTS_FULL = [
-  {id:1,desc:"Hunt 3 times",goal:3,progress:0,reward:30,completed:false},
-  {id:2,desc:"Train 3 times",goal:3,progress:0,reward:25,completed:false},
-  {id:3,desc:"Win 2 PvP battles",goal:2,progress:0,reward:"Alpha Fang",completed:false},
-  {id:4,desc:"Hunt 10 times",goal:10,progress:0,reward:60,completed:false},
-  {id:5,desc:"Collect 150 $PREY",goal:150,progress:0,reward:100,completed:false},
-  {id:6,desc:"Reach Strength 5",goal:5,progress:0,reward:80,completed:false},
-  {id:7,desc:"Own 2 relics",goal:2,progress:0,reward:90,completed:false},
-  {id:8,desc:"Win 5 PvP battles",goal:5,progress:0,reward:140,completed:false},
-  {id:9,desc:"Hunt 30 times",goal:30,progress:0,reward:180,completed:false},
-  {id:10,desc:"Complete Wolf questline",goal:9,progress:0,reward:300,completed:false}
-];
-
-const HUNTER_QUESTS_FULL = [
-  {id:1,desc:"Hunt 4 times",goal:4,progress:0,reward:30,completed:false},
-  {id:2,desc:"Train 4 times",goal:4,progress:0,reward:25,completed:false},
-  {id:3,desc:"Win 2 PvP battles",goal:2,progress:0,reward:"Hunter's Bow",completed:false},
-  {id:4,desc:"Hunt 12 times",goal:12,progress:0,reward:70,completed:false},
-  {id:5,desc:"Collect 160 $PREY",goal:160,progress:0,reward:110,completed:false},
-  {id:6,desc:"Reach Strength 5",goal:5,progress:0,reward:80,completed:false},
-  {id:7,desc:"Own 1 relic",goal:1,progress:0,reward:70,completed:false},
-  {id:8,desc:"Win 5 PvP battles",goal:5,progress:0,reward:140,completed:false},
-  {id:9,desc:"Hunt 25 times",goal:25,progress:0,reward:160,completed:false},
-  {id:10,desc:"Complete Hunter questline",goal:9,progress:0,reward:300,completed:false}
-];
-
-/* ----- Codex pools ----- */
-const WOLF_CODEX = [
-  "The First Howl shook the skies when the Alpha rose.",
-  "Under the Blood Moon, wolves gained strength beyond mortal limits.",
-  "The Relics were crafted from the bones of fallen gods.",
-  "The Totem of the Alpha binds the pack as one spirit.",
-  "The Eternal Fang can slay even the undying.",
-  "Whispers tell of a hidden Moon Temple deep in shadow forests.",
-  "Loyal wolves who fall return as Spirits of the Eternal Hunt.",
-  "Only the strongest Alpha may challenge the Eternal Alpha.",
-  "The final prophecy: when Hunters fall, Wolves ascend eternal."
-];
-
-const HUNTER_CODEX = [
-  "The first Hunters swore an oath under starlight.",
-  "Silver arrows were forged to pierce the wolves’ hide.",
-  "The Order of the Hunt was founded to protect mankind.",
-  "The Charm of Precision guided arrows through darkness.",
-  "The Relic of Ancients once belonged to the First Hunter.",
-  "The Cloak of the Eternal Hunt conceals the chosen.",
-  "Hunters believe wolves carry fragments of cursed gods.",
-  "To slay the Alpha is to claim the Hunt’s Crown.",
-  "The final prophecy: when Wolves fall, Hunters reign eternal."
-];
-
-/* ---------- Utility: load/save ---------- */
-function loadState(){
-  try{ const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); return s; } catch(e){ return null; }
-}
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-
-/* ---------- UI helpers ---------- */
-function togglePanel(id){ document.getElementById(id).classList.toggle('open'); }
-function setMainLog(txt){ document.getElementById('mainLog').textContent = txt; }
-function playSfx(id){ if(muted) return; try{ const a=document.getElementById(id); if(a){ a.currentTime = 0; a.play().catch(()=>{}); } } catch(e){} }
-function flashMain(color){ const el = document.getElementById('mainLog'); if(color==='green'){ el.classList.add('flash-green'); setTimeout(()=>el.classList.remove('flash-green'),600);} else { el.classList.add('flash-red'); setTimeout(()=>el.classList.remove('flash-red'),600);} }
-function toggleMute(){ muted = !muted; document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊'; }
-
-/* ---------- Initialize on first run ---------- */
-function initIfNeeded(){
-  if(!state.username){
-    state.username = '';
-  }
-  if(!state.role) state.role = 'wolf';
-  if(!state.quests || !Array.isArray(state.quests)){
-    state.quests = (state.role==='hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS_FULL)) : JSON.parse(JSON.stringify(WOLF_QUESTS_FULL));
-  }
-  if(!state.codexUnlocked) state.codexUnlocked = [];
-  // bind UI inputs
-  document.getElementById('usernameInput').value = state.username || '';
-  document.getElementById('roleSelect').value = state.role;
-  document.getElementById('displayName').textContent = state.username || '—';
-  document.getElementById('displayRole').textContent = state.role;
-  renderAll();
-}
-initIfNeeded();
-
-/* ---------- Game actions ---------- */
-function doHunt(){
-  // base random gains
-  const base = Math.floor(Math.random()*10)+6; // 6..15
-  const isBlood = Math.floor(Date.now()/60000)%4===0; // every 4-minute window (demo)
-  const gained = isBlood ? base * 2 : base;
-  state.prey += gained;
-  state.xp += 12;
-  setMainLog(`You hunted and gained ${gained} $PREY.${isBlood ? ' Blood Moon bonus!' : ''}`);
-  playSfx(state.role==='wolf' ? 's_wolf' : 's_bow');
-  flashMain(gained >= 20 ? 'green':'red');
-  incrementQuests('hunt');
-  checkLevelUp();
-  saveState(); renderAll();
-}
-function doTrain(){
-  if(state.prey < 20){ setMainLog('Not enough $PREY to train.'); playSfx('s_lose'); return; }
-  state.prey -= 20;
-  state.strength += 1;
-  state.xp += 8;
-  setMainLog(`You trained. Strength is now ${state.strength}.`);
-  playSfx('s_train');
-  incrementQuests('train');
-  checkLevelUp();
-  saveState(); renderAll();
-}
-function doPvp(){
-  // quick PvP inside panel
-  const enemy = { name: 'Rival'+Math.floor(Math.random()*90+10), strength: Math.max(1, state.strength + (Math.floor(Math.random()*3)-1)) };
-  const playerRoll = Math.floor(Math.random()*20) + state.strength;
-  const enemyRoll = Math.floor(Math.random()*20) + enemy.strength;
-  let outcome;
-  if(playerRoll >= enemyRoll){
-    const reward = Math.ceil(10 + Math.random()*25);
-    state.prey += reward;
-    state.xp += 14;
-    outcome = `You defeated ${enemy.name} (STR ${enemy.strength}) and gained ${reward} $PREY!`;
-    playSfx('s_win');
-    incrementQuests('pvpwin');
-  } else {
-    const loss = Math.min(state.prey, Math.ceil(8 + Math.random()*18));
-    state.prey -= loss;
-    state.xp += 4;
-    outcome = `You were defeated by ${enemy.name} (STR ${enemy.strength}) and lost ${loss} $PREY.`;
-    playSfx('s_lose');
-    incrementQuests('pvploss');
-  }
-  setMainLog(outcome); checkLevelUp(); saveState(); renderAll();
-}
-
-/* ---------- Quest system ---------- */
-function incrementQuests(action){
-  // action values: 'hunt', 'train', 'pvpwin', 'pvploss', 'relic'
-  let completedAny = false;
-  state.quests.forEach(q=>{
-    if(q.completed) return;
-    const txt = q.desc.toLowerCase();
-    if(action==='hunt' && txt.includes('hunt')) q.progress = (q.progress||0)+1;
-    if(action==='train' && txt.includes('train')) q.progress = (q.progress||0)+1;
-    if(action==='pvpwin' && txt.includes('win')) q.progress = (q.progress||0)+1;
-    if(action==='pvploss' && txt.includes('survive')) q.progress = (q.progress||0)+1;
-    if(action==='relic' && txt.includes('own')) q.progress = state.inventory.length;
-    if(txt.includes('collect') && state.prey >= q.goal) q.progress = q.goal;
-    if(txt.includes('strength') && state.strength >= q.goal) q.progress = q.goal;
-    if(txt.includes('reach level') && state.level >= q.goal) q.progress = q.goal;
-    if(q.progress >= q.goal && !q.completed){
-      q.completed = true;
-      // reward
-      if(typeof q.reward === 'number'){
-        state.prey += q.reward;
-        setMainLog(`Quest "${q.desc}" completed — +${q.reward} $PREY`);
-      } else {
-        state.inventory.push(q.reward);
-        setMainLog(`Quest "${q.desc}" completed — received ${q.reward}`);
-      }
-      completedAny = true;
+    function openPanel(panel){
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById(panel).classList.add('active');
+      document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+      document.querySelector(`.nav button[onclick="openPanel('${panel}')"]`).classList.add('active');
+      if(panel==='quests') renderQuests();
+      if(panel==='inventory') renderInventory();
+      if(panel==='codex') renderCodex();
+      if(panel==='leaderboard') renderLeaderboard();
     }
-  });
-  if(completedAny) { unlockNextCodex(); saveState(); }
-}
 
-/* ---------- Codex unlock ---------- */
-function unlockNextCodex(){
-  const pool = state.role==='hunter' ? HUNTER_CODEX : WOLF_CODEX;
-  if(state.codexUnlocked.length < pool.length){
-    const next = pool[state.codexUnlocked.length];
-    state.codexUnlocked.push(next);
-    // animated reveal in modal
-    revealCodex(next);
-  }
-}
+    async function saveProfile(){
+      username=document.getElementById('usernameInput').value||"Unknown";
+      role=document.getElementById('roleSelect').value;
+      await setDoc(doc(db,"players",username),{prey,strength,level,xp,role,inventory});
+      document.getElementById('profileStatus').textContent="✅ Profile saved!";
+    }
 
-/* animated codex reveal */
-function revealCodex(text){
-  openCodexModal();
-  const content = document.getElementById('codexContent');
-  content.innerHTML = '';
-  const p = document.createElement('p'); p.className = 'typing'; p.textContent = '';
-  content.appendChild(p);
-  let i = 0;
-  const t = setInterval(()=> {
-    if(i < text.length){ p.textContent += text[i++]; }
-    else { clearInterval(t); p.classList.remove('typing'); renderCodexBox(); }
-  }, 34);
-}
+    async function hunt(){
+      document.getElementById('huntSound').play();
+      let gained=Math.floor(Math.random()*10)+1;
+      if(isBloodMoon()){ gained*=2; document.getElementById('bloodMoon').textContent="🌑 Blood Moon! Double rewards."; }
+      else document.getElementById('bloodMoon').textContent="";
+      prey+=gained; xp+=10; checkLevelUp();
+      document.getElementById('gameResult').textContent=`You hunted and gained ${gained} $PREY. Total: ${prey}`;
+      await updatePlayer();
+    }
 
-/* ---------- Shop & Inventory ---------- */
-function buyRelic(name,cost){
-  if(state.prey < cost){ document.getElementById('shopMessage').textContent = 'Not enough $PREY.'; playSfx('s_lose'); return; }
-  state.prey -= cost; state.inventory.push(name);
-  document.getElementById('shopMessage').textContent = `Bought ${name}.`;
-  playSfx('s_win'); incrementQuests('relic'); saveState(); renderAll();
-}
+    async function train(){
+      if(prey>=20){ document.getElementById('trainSound').play();
+        prey-=20; strength++; xp+=5; checkLevelUp();
+        document.getElementById('gameResult').textContent=`You trained. Strength=${strength}`;
+        await updatePlayer();
+      } else document.getElementById('gameResult').textContent="Not enough $PREY to train.";
+    }
 
-/* ---------- Rewarded ad placeholder ---------- */
-function startRewardedAd(){
-  document.getElementById('adModal').style.display = 'flex';
-  const body = document.getElementById('adBody');
-  let sec = 5; body.textContent = `Watching ad... ${sec}s`;
-  playSfx('s_ad');
-  adTimer = setInterval(()=> {
-    sec--;
-    if(sec <= 0){
-      clearInterval(adTimer);
-      adTimer = null;
-      state.prey += 50;
-      saveState(); renderAll();
-      body.textContent = 'Ad finished — +50 $PREY';
-      setTimeout(closeAdModal, 900);
-      setMainLog('Ad finished: +50 $PREY');
-    } else body.textContent = `Watching ad... ${sec}s`;
-  }, 1000);
-}
-function closeAdModal(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } document.getElementById('adModal').style.display = 'none'; }
-function claimAdNow(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } state.prey += 50; saveState(); renderAll(); closeAdModal(); setMainLog('Ad granted: +50 $PREY'); }
+    async function pvp(){
+      document.getElementById('pvpSound').play();
+      let enemyStr=Math.floor(Math.random()*5)+1;
+      if(strength>=enemyStr){ prey+=15; document.getElementById('gameResult').textContent=`You won! Enemy STR ${enemyStr}.`; }
+      else document.getElementById('gameResult').textContent=`You lost. Enemy STR ${enemyStr}.`;
+      await updatePlayer();
+    }
 
-/* ---------- Daily ---------- */
-function claimDaily(){
-  const key = 'eh_daily_ts_v1';
-  const last = parseInt(localStorage.getItem(key) || '0', 10);
-  const now = Date.now();
-  if(now - last < 24*60*60*1000){ alert('Daily already claimed'); return; }
-  state.prey += 25; localStorage.setItem(key, String(now)); saveState(); renderAll(); setMainLog('Daily claimed: +25 $PREY');
-}
+    function isBloodMoon(){ return Math.floor(Date.now()/60000)%4===0; }
+    function checkLevelUp(){ while(xp>=level*100){ xp-=level*100; level++; } }
 
-/* ---------- PvP panel helpers ---------- */
-function openPvpPanel(){ document.getElementById('pvpModal').style.display = 'flex'; document.getElementById('pvpLog').textContent = 'Ready to fight.'; }
-function closePvpModal(){ document.getElementById('pvpModal').style.display = 'none'; }
+    function buyItem(item,cost){
+      if(prey>=cost){ prey-=cost; inventory.push(item); document.getElementById('shopResult').textContent=`Bought ${item}`; }
+      else document.getElementById('shopResult').textContent="Not enough $PREY.";
+      updatePlayer();
+    }
+    function renderInventory(){
+      const list=document.getElementById('inventoryList');
+      list.innerHTML=""; inventory.forEach(i=>{ let li=document.createElement('li'); li.textContent=i; list.appendChild(li); });
+    }
 
-/* ---------- Save profile ---------- */
-function saveProfile(){
-  const name = document.getElementById('usernameInput').value.trim();
-  const role = document.getElementById('roleSelect').value;
-  if(!name){ alert('Enter a Discord username (e.g. Wolf#1234)'); return; }
-  // change role resets quests/codex to that role
-  const roleChanged = state.role !== role;
-  state.username = name; state.role = role;
-  if(roleChanged || !state.quests) {
-    state.quests = (role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS_FULL)) : JSON.parse(JSON.stringify(WOLF_QUESTS_FULL));
-    state.codexUnlocked = [];
-  }
-  saveState();
-  document.getElementById('displayName').textContent = state.username;
-  document.getElementById('displayRole').textContent = state.role;
-  setMainLog('Profile saved.');
-  renderAll();
-}
+    function renderQuests(){
+      const list=document.getElementById('questList'); list.innerHTML="";
+      let roleQuests=(role==="wolf")?
+        ["Hunt 3 times","Train 2 times","Howl at Blood Moon","Defeat 2 Hunters","Collect a Wolf Totem","Win 3 PvP","Earn 200 $PREY","Level up once","Gather relics","Alpha challenge"]:
+        ["Defeat 2 Wolves","Train 3 times","Win 2 PvP","Earn 150 $PREY","Find Relic Shard","Craft Hunter Bow","Complete 5 Hunts","Level up twice","Join Hunter Lodge","Blood Moon Challenge"];
+      roleQuests.forEach(q=>{ let li=document.createElement('li'); li.textContent=q; list.appendChild(li); });
+    }
 
-/* ---------- Level up ---------- */
-function checkLevelUp(){
-  while(state.xp >= state.level * 100){ state.xp -= state.level * 100; state.level++; setMainLog(`Leveled up! Level ${state.level}`); }
-  saveState(); renderAll();
-}
+    function renderCodex(){
+      const div=document.getElementById('codexEntries'); div.innerHTML="";
+      codex[role].forEach(c=>{ if(level>=c.level){ let p=document.createElement('p'); p.textContent=c.text; div.appendChild(p);} });
+    }
 
-/* ---------- Leaderboard (local) ---------- */
-function renderLeaderboard(){
-  const key = 'eh_local_leader_v1';
-  let board = JSON.parse(localStorage.getItem(key) || '{}');
-  if(state.username) board[state.username] = { username: state.username, role: state.role, prey: state.prey, strength: state.strength, level: state.level, updated: Date.now() };
-  localStorage.setItem(key, JSON.stringify(board));
-  const arr = Object.values(board).sort((a,b)=>b.prey - a.prey).slice(0,20);
-  const el = document.getElementById('leaderboardList');
-  el.innerHTML = '';
-  arr.forEach(p => { const li = document.createElement('li'); li.textContent = `${p.username} ${p.role==='wolf'?'🐺':'🏹'} — ${p.prey} $PREY (L${p.level} STR${p.strength})`; el.appendChild(li); });
-}
+    async function renderLeaderboard(){
+      const list=document.getElementById('leaderboardList'); list.innerHTML="";
+      const snapshot=await getDocs(collection(db,"players"));
+      snapshot.forEach(docSnap=>{
+        let p=docSnap.data();
+        let li=document.createElement('li'); li.textContent=`${docSnap.id}: ${p.prey} $PREY (L${p.level} STR${p.strength})`; 
+        list.appendChild(li);
+      });
+    }
 
-/* ---------- Render functions ---------- */
-function renderQuests(){
-  const c = document.getElementById('questsContainer'); c.innerHTML = '';
-  state.quests.forEach(q => {
-    const d = document.createElement('div');
-    d.style.marginBottom = '8px';
-    d.innerHTML = `<div style="font-weight:700">${q.desc}</div><div class="small">Progress ${q.progress||0}/${q.goal} • Reward: ${q.reward}</div>`;
-    if(q.completed) d.style.opacity = '.6';
-    c.appendChild(d);
-  });
-}
-function renderInventory(){
-  const el = document.getElementById('inventoryList');
-  el.innerHTML = state.inventory.length ? state.inventory.map(i=>`• ${i}`).join('<br>') : '<span class="small">Empty</span>';
-}
-function renderCodexBox(){
-  const box = document.getElementById('codexBox');
-  box.innerHTML = '';
-  const pool = state.role === 'hunter' ? HUNTER_CODEX : WOLF_CODEX;
-  if(state.codexUnlocked.length === 0){ box.innerHTML = '<div class="small">No lore unlocked yet. Complete quests to reveal entries.</div>'; return; }
-  state.codexUnlocked.forEach((t,i)=>{
-    const p = document.createElement('p'); p.className = 'codex-entry glow'; p.textContent = `${i+1}. ${t}`; box.appendChild(p);
-  });
-}
-function renderAll(){
-  document.getElementById('displayName').textContent = state.username || '—';
-  document.getElementById('displayRole').textContent = state.role;
-  document.getElementById('displayPrey').textContent = state.prey;
-  document.getElementById('displayStrength').textContent = state.strength;
-  document.getElementById('displayLevel').textContent = state.level;
-  renderQuests(); renderInventory(); renderCodexBox(); renderLeaderboard();
-}
+    function watchAd(){
+      let bonus=Math.floor(Math.random()*20)+10;
+      prey+=bonus;
+      document.getElementById('adResult').textContent=`You earned ${bonus} $PREY from watching an ad!`;
+      updatePlayer();
+    }
 
-/* ---------- Codex modal ---------- */
-function openCodexModal(){
-  const modal = document.getElementById('codexModal'); modal.style.display = 'flex';
-  const content = document.getElementById('codexContent'); content.innerHTML = '';
-  if(state.codexUnlocked.length === 0){ content.innerHTML = '<div class="small">No lore unlocked yet.</div>'; return; }
-  state.codexUnlocked.forEach((t,i) => {
-    const p = document.createElement('p'); p.className = 'codex-entry'; p.textContent = `${i+1}. ${t}`; content.appendChild(p);
-  });
-}
-function closeCodexModal(){ document.getElementById('codexModal').style.display = 'none'; }
-
-/* ---------- Helper: reset progress ---------- */
-function resetProgress(){
-  if(!confirm('Reset local progress?')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  // also remove local leaderboard
-  // localStorage.removeItem('eh_local_leader_v1');
-  location.reload();
-}
-
-/* ---------- Init UI binders ---------- */
-document.getElementById('usernameInput').addEventListener('keydown', e => { if(e.key === 'Enter') saveProfile(); });
-document.getElementById('roleSelect').addEventListener('change', () => { /* no-op */ });
-
-/* Expose some functions to buttons inside strings used earlier */
-window.togglePanel = togglePanel;
-window.doHunt = doHunt;
-window.doTrain = doTrain;
-window.openPvpPanel = openPvpPanel;
-window.doPvp = doPvp;
-window.buyRelic = buyRelic;
-window.startRewardedAd = startRewardedAd;
-window.claimDaily = claimDaily;
-window.saveProfile = saveProfile;
-window.resetProgress = resetProgress;
-window.openCodexModal = openCodexModal;
-window.closeCodexModal = closeCodexModal;
-window.openPvpPanel = openPvpPanel;
-window.closePvpModal = closePvpModal;
-window.toggleMute = toggleMute;
-window.closeAdModal = closeAdModal;
-window.claimAdNow = claimAdNow;
-
-/* ---------- Start: render UI ---------- */
-renderAll();
-setMainLog('Ready. Save your profile and begin the Eternal Hunt!');
-saveState();
-</script>
+    async function updatePlayer(){
+      if(!username) return;
+      await setDoc(doc(db,"players",username),{prey,strength,level,xp,role,inventory});
+    }
+  </script>
 </body>
 </html>

@@ -49,7 +49,6 @@ h1 { color:#ff4444; font-size:1.8rem; margin-top:10px; }
   <button onclick="openTab('leaderboard')">Leaderboard</button>
   <button onclick="watchAd()">Watch Ad ($PREY)</button>
 </div>
-
 <!-- Play Tab -->
 <div id="play" class="tab">
   <h2>Hunt / Train / PvP</h2>
@@ -90,232 +89,289 @@ h1 { color:#ff4444; font-size:1.8rem; margin-top:10px; }
   <h2>Leaderboard</h2>
   <ol id="leaderboardList"></ol>
 </div>
-
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBz11XDhnqNwMyNUjqFpoC8lppEgCP-mew",
-  authDomain: "eternal-hunt-game-e48fb.firebaseapp.com",
-  projectId: "eternal-hunt-game-e48fb",
-  storageBucket: "eternal-hunt-game-e48fb.firebasestorage.app",
-  messagingSenderId: "87971567607",
-  appId: "1:87971567607:web:2b4401b8e8672436ea80f2"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-</script>
-
 <script>
-// Game Variables
-let playerName="", role="wolf", prey=0, strength=1, level=1, xp=0;
-let inventory=[], quests=[], codex=[];
+// --- Game Variables ---
+let playerName = "";
+let role = "wolf";
+let prey = 0;
+let strength = 1;
+let level = 1;
+let xp = 0;
+let inventory = [];
+let quests = [];
+let codex = [];
 
-// Role-based quests
-const wolfQuests=[{text:"Hunt 3 times", goal:3, progress:0, reward:50, completed:false},{text:"Collect 5 Relics", goal:5, progress:0, reward:"Relic Shard", completed:false},{text:"Win 2 PvP battles", goal:2, progress:0, reward:100, completed:false},{text:"Train 5 times", goal:5, progress:0, reward:20, completed:false},{text:"Participate in Blood Moon hunt", goal:1, progress:0, reward:50, completed:false},{text:"Hunt rare prey 2 times", goal:2, progress:0, reward:75, completed:false},{text:"Equip 3 Relics", goal:3, progress:0, reward:"Wolf Totem", completed:false},{text:"Reach level 5", goal:5, progress:0, reward:100, completed:false},{text:"Win PvP 5 times", goal:5, progress:0, reward:"Relic Shard", completed:false},{text:"Hunt during Blood Moon 3 times", goal:3, progress:0, reward:150, completed:false}];
-const hunterQuests=[{text:"Train 3 times", goal:3, progress:0, reward:50, completed:false},{text:"Hunt 2 Wolves", goal:2, progress:0, reward:"Relic Shard", completed:false},{text:"Win 2 PvP battles", goal:2, progress:0, reward:100, completed:false},{text:"Equip 2 Relics", goal:2, progress:0, reward:"Wolf Totem", completed:false},{text:"Reach level 4", goal:4, progress:0, reward:50, completed:false},{text:"Complete 3 hunts", goal:3, progress:0, reward:30, completed:false},{text:"Participate in Blood Moon defense", goal:1, progress:0, reward:75, completed:false},{text:"Win PvP 5 times", goal:5, progress:0, reward:150, completed:false},{text:"Train 10 times", goal:10, progress:0, reward:200, completed:false},{text:"Complete 5 quests", goal:5, progress:0, reward:100, completed:false}];
+// --- Role-based Quests ---
+const wolfQuests = [
+  {text:"Hunt 3 times", goal:3, progress:0, reward:50, completed:false},
+  {text:"Collect 5 Relics", goal:5, progress:0, reward:"Relic Shard", completed:false},
+  {text:"Win 2 PvP battles", goal:2, progress:0, reward:100, completed:false},
+  {text:"Train 5 times", goal:5, progress:0, reward:20, completed:false},
+  {text:"Participate in Blood Moon hunt", goal:1, progress:0, reward:50, completed:false},
+  {text:"Hunt rare prey 2 times", goal:2, progress:0, reward:75, completed:false},
+  {text:"Equip 3 Relics", goal:3, progress:0, reward:"Wolf Totem", completed:false},
+  {text:"Reach level 5", goal:5, progress:0, reward:100, completed:false},
+  {text:"Win PvP 5 times", goal:5, progress:0, reward:"Relic Shard", completed:false},
+  {text:"Hunt during Blood Moon 3 times", goal:3, progress:0, reward:150, completed:false}
+];
 
-// Codex
-const wolfCodex=["Wolves roam the eternal forests, guided by the Blood Moon.","The pack grows stronger with each hunt under the moonlight."];
-const hunterCodex=["Hunters sharpen their skills to face the eternal hunt.","Ancient powers awaken in the heart of the hunter."];
+const hunterQuests = [
+  {text:"Train 3 times", goal:3, progress:0, reward:50, completed:false},
+  {text:"Hunt 2 Wolves", goal:2, progress:0, reward:"Relic Shard", completed:false},
+  {text:"Win 2 PvP battles", goal:2, progress:0, reward:100, completed:false},
+  {text:"Equip 2 Relics", goal:2, progress:0, reward:"Wolf Totem", completed:false},
+  {text:"Reach level 4", goal:4, progress:0, reward:50, completed:false},
+  {text:"Complete 3 hunts", goal:3, progress:0, reward:30, completed:false},
+  {text:"Participate in Blood Moon defense", goal:1, progress:0, reward:75, completed:false},
+  {text:"Win PvP 5 times", goal:5, progress:0, reward:150, completed:false},
+  {text:"Train 10 times", goal:10, progress:0, reward:200, completed:false},
+  {text:"Complete 5 quests", goal:5, progress:0, reward:100, completed:false}
+];
 
-// Profile Setup
-function setProfile(){
-  const name=document.getElementById("playerName").value.trim();
-  const selectedRole=document.getElementById("roleSelect").value;
-  if(!name){document.getElementById("profileMsg").textContent="Enter a username"; return;}
-  playerName=name; role=selectedRole;
-  quests=role==="wolf"?JSON.parse(JSON.stringify(wolfQuests)):JSON.parse(JSON.stringify(hunterQuests));
-  codex=role==="wolf"?wolfCodex:hunterCodex;
-  document.getElementById("profileMsg").textContent=`Profile saved! Role: ${role}, Username: ${playerName}`;
-  document.getElementById("profilePanel").style.display="none";
-  document.getElementById("playerStats").style.display="block";
-  openTab("play");
+// --- Codex Entries ---
+const wolfCodex = [
+  "Wolves roam the eternal forests, guided by the Blood Moon.",
+  "The pack grows stronger with each hunt under the moonlight."
+];
+
+const hunterCodex = [
+  "Hunters sharpen their skills to face the eternal hunt.",
+  "Ancient powers awaken in the heart of the hunter."
+];
+
+// --- Profile Setup ---
+function setProfile() {
+  const nameInput = document.getElementById("playerName").value.trim();
+  const selectedRole = document.getElementById("roleSelect").value;
+
+  if (!nameInput) {
+    document.getElementById("profileMsg").textContent = "Enter a username";
+    return;
+  }
+
+  playerName = nameInput;
+  role = selectedRole;
+  quests = role === "wolf" ? JSON.parse(JSON.stringify(wolfQuests)) : JSON.parse(JSON.stringify(hunterQuests));
+  codex = role === "wolf" ? wolfCodex : hunterCodex;
+
+  document.getElementById("profileMsg").textContent = `Profile saved! Username: ${playerName}, Role: ${role}`;
+  document.getElementById("profilePanel").style.display = "none";
+  document.getElementById("playerStats").style.display = "block";
+
   updateStats();
-  savePlayer().then(renderLeaderboard);
+  openTab("play");
 }
 
-// Player Stats
-function updateStats(){
-  document.getElementById("statsDisplay").textContent=`Username: ${playerName} | Role: ${role} | Level: ${level} | Strength: ${strength} | $PREY: ${prey} | XP: ${xp}`;
+// --- Update Stats Display ---
+function updateStats() {
+  document.getElementById("statsDisplay").textContent =
+    `Username: ${playerName} | Role: ${role} | Level: ${level} | Strength: ${strength} | $PREY: ${prey} | XP: ${xp}`;
 }
 
-// Tabs
-function openTab(tab){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById(tab).classList.add('active');
-  document.querySelectorAll('.tab-buttons button').forEach(b=>b.classList.remove('active'));
-  const btn=Array.from(document.querySelectorAll('.tab-buttons button')).find(b=>b.textContent.toLowerCase()===tab);
-  if(btn) btn.classList.add('active');
-  if(tab==='quests') renderQuests();
-  if(tab==='inventory') renderInventory();
-  if(tab==='codex') renderCodex();
-  if(tab==='leaderboard') renderLeaderboard();
+// --- Open Tab Function ---
+function openTab(tabName) {
+  document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+  document.getElementById(tabName).classList.add("active");
+
+  document.querySelectorAll(".tab-buttons button").forEach(btn => btn.classList.remove("active"));
+  const activeBtn = Array.from(document.querySelectorAll(".tab-buttons button"))
+    .find(b => b.textContent.toLowerCase() === tabName);
+  if (activeBtn) activeBtn.classList.add("active");
+
+  if (tabName === "quests") renderQuests();
+  if (tabName === "inventory") renderInventory();
+  if (tabName === "codex") renderCodex();
+  if (tabName === "leaderboard") renderLeaderboard();
 }
 
-// Reward Animation
-function addRewardAnimation(id){
-  const el=document.getElementById(id);
-  if(!el) return;
+// --- Reward Animation ---
+function addRewardAnimation(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
   el.classList.add("rewardAnim");
-  setTimeout(()=>el.classList.remove("rewardAnim"),800);
+  setTimeout(() => el.classList.remove("rewardAnim"), 800);
 }
 
-// Level Up
-function checkLevelUp(){
-  while(xp>=level*100){ xp-=level*100; level++; addRewardAnimation("statsDisplay"); }
+// --- Level Up Check ---
+function checkLevelUp() {
+  while (xp >= level * 100) {
+    xp -= level * 100;
+    level++;
+    addRewardAnimation("statsDisplay");
+  }
 }
 
-// Blood Moon
-function isBloodMoon(){
-  const now=Date.now();
-  return Math.floor(now/60000)%4===0;
+// --- Blood Moon Event ---
+function isBloodMoon() {
+  const now = Date.now();
+  // Every 4 minutes for demo
+  return Math.floor(now / 60000) % 4 === 0;
 }
+</script>
+<script>
+// --- Hunt Function ---
+function hunt() {
+  if (!playerName) { alert("Set your profile first!"); return; }
 
-// Hunt
-function hunt(){
-  if(!playerName){ alert("Set profile first!"); return; }
-  let gained=Math.floor(Math.random()*10)+1;
-  if(isBloodMoon()){ gained*=2; document.getElementById("bloodMoon").textContent="🌑 Blood Moon active! Double rewards!"; }
-  else { document.getElementById("bloodMoon").textContent=""; }
-  prey+=gained; xp+=10;
-  updateQuests("hunt"); checkLevelUp(); updateStats();
-  document.getElementById("huntResult").textContent=`You hunted and gained ${gained} $PREY. Total: ${prey}`;
+  let gained = Math.floor(Math.random() * 10) + 1;
+  if (isBloodMoon()) {
+    gained *= 2;
+    document.getElementById("bloodMoon").textContent = "🌑 Blood Moon! Double $PREY!";
+  } else {
+    document.getElementById("bloodMoon").textContent = "";
+  }
+  prey += gained;
+  xp += 10;
+  checkLevelUp();
+  document.getElementById("huntResult").textContent = `You hunted and gained ${gained} $PREY.`;
   addRewardAnimation("huntResult");
-  savePlayer().then(renderLeaderboard);
+
+  updateQuests("hunt");
+  updateStatsAndFirestore();
 }
 
-// Train
-function train(){
-  if(!playerName){ alert("Set profile first!"); return; }
-  if(prey>=20){ prey-=20; strength++; xp+=5; checkLevelUp();
-    document.getElementById("trainResult").textContent=`You trained. Strength=${strength}`;
+// --- Train Function ---
+function train() {
+  if (!playerName) { alert("Set your profile first!"); return; }
+  if (prey >= 20) {
+    prey -= 20;
+    strength++;
+    xp += 5;
+    checkLevelUp();
+    document.getElementById("trainResult").textContent = `You trained. Strength: ${strength}`;
     addRewardAnimation("trainResult");
-  } else { document.getElementById("trainResult").textContent="Not enough $PREY to train."; }
-  updateStats(); savePlayer().then(renderLeaderboard);
+  } else {
+    document.getElementById("trainResult").textContent = "Not enough $PREY to train.";
+  }
+  updateQuests("train");
+  updateStatsAndFirestore();
 }
 
-// PvP
-function pvp(){
-  if(!playerName){ alert("Set profile first!"); return; }
-  let enemyStr=Math.floor(Math.random()*5)+1;
-  let result=strength>=enemyStr?"You won!":"You lost.";
-  if(result==="You won!") prey+=15;
-  document.getElementById("pvpResult").textContent=`Enemy STR ${enemyStr}. ${result}`;
+// --- PvP Function ---
+function pvp() {
+  if (!playerName) { alert("Set your profile first!"); return; }
+  const enemyStr = Math.floor(Math.random() * 5) + 1;
+  let result;
+  if (strength >= enemyStr) {
+    result = "You won!";
+    prey += 15;
+  } else {
+    result = "You lost.";
+  }
+  document.getElementById("pvpResult").textContent = `Enemy STR: ${enemyStr}. ${result}`;
   addRewardAnimation("pvpResult");
-  updateQuests("pvp"); updateStats();
-  savePlayer().then(renderLeaderboard);
+  updateQuests("pvp");
+  updateStatsAndFirestore();
 }
 
-// Watch Ad
-function watchAd(){
-  if(!playerName){ alert("Set profile first!"); return; }
-  let reward=Math.floor(Math.random()*30)+20; prey+=reward;
-  alert(`You watched an ad and earned ${reward} $PREY!`);
-  addRewardAnimation("statsDisplay");
-  updateStats(); savePlayer().then(renderLeaderboard);
-}
-
-// Inventory & Shop
-function buyItem(item,cost){
-  if(!playerName){ alert("Set profile first!"); return; }
-  if(prey>=cost){ prey-=cost; inventory.push(item);
-    document.getElementById("shopResult").textContent=`Bought ${item}`;
+// --- Buy Item / Shop Function ---
+function buyItem(item, cost) {
+  if (prey >= cost) {
+    prey -= cost;
+    inventory.push(item);
+    document.getElementById("shopResult").textContent = `Bought ${item}!`;
     addRewardAnimation("shopResult");
-  } else { document.getElementById("shopResult").textContent="Not enough $PREY."; }
-  updateStats(); savePlayer().then(renderLeaderboard);
+  } else {
+    document.getElementById("shopResult").textContent = "Not enough $PREY.";
+  }
+  updateStatsAndFirestore();
   renderInventory();
 }
 
-function renderInventory(){
-  const list=document.getElementById("inventoryList"); list.innerHTML="";
-  inventory.forEach(i=>{ let li=document.createElement("li"); li.textContent=i; list.appendChild(li); });
-}
-
-// Quests
-function renderQuests(){
-  const list=document.getElementById("questList"); list.innerHTML="";
-  quests.forEach(q=>{
-    let li=document.createElement("li");
-    li.textContent=`${q.text} [${q.progress}/${q.goal}] Reward: ${q.reward}`;
-    if(q.completed) li.classList.add("quest","completed");
+// --- Render Inventory ---
+function renderInventory() {
+  const list = document.getElementById("inventoryList");
+  list.innerHTML = "";
+  inventory.forEach(i => {
+    const li = document.createElement("li");
+    li.textContent = i;
     list.appendChild(li);
   });
 }
 
-function updateQuests(type){
-  quests.forEach(q=>{
-    if(q.completed) return;
-    if(type==="hunt" && q.text.toLowerCase().includes("hunt")) q.progress++;
-    if(type==="train" && q.text.toLowerCase().includes("train")) q.progress++;
-    if(type==="pvp" && q.text.toLowerCase().includes("pvp")) q.progress++;
-    if(q.progress>=q.goal){ q.completed=true;
-      if(typeof q.reward==="number"){ prey+=q.reward; } else { inventory.push(q.reward); }
+// --- Render Quests ---
+function renderQuests() {
+  const list = document.getElementById("questList");
+  list.innerHTML = "";
+  quests.forEach(q => {
+    const li = document.createElement("li");
+    li.textContent = `${q.text} [${q.progress}/${q.goal}] Reward: ${q.reward}`;
+    if (q.completed) li.classList.add("quest", "completed");
+    list.appendChild(li);
+  });
+}
+
+// --- Update Quests ---
+function updateQuests(type) {
+  quests.forEach(q => {
+    if (!q.completed) {
+      if (type === "hunt" && q.text.toLowerCase().includes("hunt")) q.progress++;
+      if (type === "train" && q.text.toLowerCase().includes("train")) q.progress++;
+      if (type === "pvp" && q.text.toLowerCase().includes("pvp")) q.progress++;
+      if (q.progress >= q.goal) {
+        q.completed = true;
+        if (typeof q.reward === "number") prey += q.reward;
+        else inventory.push(q.reward);
+      }
     }
   });
-  renderQuests(); updateStats();
+  renderQuests();
 }
 
-// Codex
-function renderCodex(){
-  const div=document.getElementById("codexEntries"); div.innerHTML="";
-  codex.forEach(c=>{ let p=document.createElement("p"); p.textContent=c; div.appendChild(p); });
+// --- Render Codex ---
+function renderCodex() {
+  const div = document.getElementById("codexEntries");
+  div.innerHTML = "";
+  codex.forEach(c => {
+    const p = document.createElement("p");
+    p.textContent = c;
+    div.appendChild(p);
+  });
 }
 
-// Firebase save
-async function savePlayer(){
-  if(!playerName) return;
-  try{
-    await setDoc(doc(db,"players",playerName),{role,prey,strength,level,xp,inventory,quests});
-    console.log("Player saved!");
-  } catch(e){ console.error("Error saving player:", e); }
+// --- Ad Reward Placeholder ---
+function watchAd() {
+  if (!playerName) { alert("Set your profile first!"); return; }
+  // Placeholder: simulate ad watch
+  const reward = 25;
+  prey += reward;
+  document.getElementById("huntResult").textContent = `You watched an ad and earned ${reward} $PREY!`;
+  addRewardAnimation("huntResult");
+  updateStatsAndFirestore();
 }
 
-// Leaderboard
-async function renderLeaderboard(){
-  const list=document.getElementById("leaderboardList"); list.innerHTML="";
-  try{
-    const snapshot = await getDocs(collection(db,"players"));
-    const players=[];
-    snapshot.forEach(doc=>players.push({name: doc.id, ...doc.data()}));
-    players.sort((a,b)=>b.prey-b.prey);
-    players.slice(0,10).forEach(p=>{
-      let li=document.createElement("li");
-  
-      li.textContent=`${p.name} | Role: ${p.role} | Level: ${p.level} | STR: ${p.strength} |
-      li.textContent=`${p.name} | Role: ${p.role} | Level: ${p.level} | STR: ${p.strength} | $PREY: ${p.prey}`;
+// --- Firebase Save Player Stats ---
+function updateStatsAndFirestore() {
+  updateStats();
+  if (!playerName) return;
+  db.collection("players").doc(playerName).set({
+    role, prey, strength, level, xp, inventory, quests
+  }).catch(e => console.error("Error saving player:", e));
+}
+
+// --- Render Leaderboard ---
+function renderLeaderboard() {
+  const list = document.getElementById("leaderboardList");
+  list.innerHTML = "";
+  db.collection("players").get().then(snapshot => {
+    const players = [];
+    snapshot.forEach(doc => players.push({ name: doc.id, ...doc.data() }));
+    players.sort((a,b)=>b.prey - a.prey);
+    players.slice(0,10).forEach(p => {
+      const li = document.createElement("li");
+      li.textContent = `${p.name} | Role: ${p.role} | Level: ${p.level} | STR: ${p.strength} | $PREY: ${p.prey}`;
       list.appendChild(li);
     });
-  } catch(e){ console.error("Error fetching leaderboard:", e); }
+  }).catch(e => console.error("Error fetching leaderboard:", e));
 }
 
-// Optional: Blood Moon visual blinking
-setInterval(()=>{
-  if(isBloodMoon() && document.getElementById("play").classList.contains("active")){
-    document.getElementById("bloodMoon").style.color="#ff0000";
+// --- Blood Moon Visual Blink ---
+setInterval(() => {
+  const bm = document.getElementById("bloodMoon");
+  if (isBloodMoon() && document.getElementById("play").classList.contains("active")) {
+    bm.style.color = "#ff0000";
   } else {
-    document.getElementById("bloodMoon").style.color="#eee";
+    bm.style.color = "#eee";
   }
 }, 1000);
-
-// Optional: Sound effects
-const huntSound = new Audio('https://freesound.org/data/previews/341/341695_62490-lq.mp3');
-const trainSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3');
-const pvpSound = new Audio('https://freesound.org/data/previews/501/501483_3248244-lq.mp3');
-
-function playSound(type){
-  if(type==='hunt') huntSound.play();
-  if(type==='train') trainSound.play();
-  if(type==='pvp') pvpSound.play();
-}
-
-// Attach sounds to buttons
-document.querySelector("button[onclick='hunt()']").addEventListener('click',()=>playSound('hunt'));
-document.querySelector("button[onclick='train()']").addEventListener('click',()=>playSound('train'));
-document.querySelector("button[onclick='pvp()']").addEventListener('click',()=>playSound('pvp'));
 </script>
-</body>
-</html>

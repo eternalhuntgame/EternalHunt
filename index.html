@@ -3,8 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Eternal Hunt — UI (Part 1)</title>
-
+<title>🐺Eternal Hunt</title>
+<!-- Profile Setup -->
+<div id="profileSetup" class="panel hidden">
+  <h2>Set Up Your Profile</h2>
+  <input id="usernameInput" placeholder="Enter Username" />
+  <br />
+  <select id="roleSelect">
+    <option value="wolf">🐺 Wolf</option>
+    <option value="hunter">🏹 Hunter</option>
+  </select>
+  <br />
+  <button onclick="saveProfile()">Save Profile</button>
+</div>
 <!-- Placeholder: Firebase & Monetag scripts will be added in Part 2 -->
 <!-- <script src="https://www.gstatic.com/firebasejs/..."></script> -->
 <!-- <script src="https://...monetag...9855091.js" async></script> -->

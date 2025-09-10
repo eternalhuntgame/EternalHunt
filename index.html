@@ -95,49 +95,6 @@
   <audio id="huntSound" src="https://actions.google.com/sounds/v1/animals/wolf_howl.ogg"></audio>
 
 <script>
-  // === Daily Codex ===
-function loadDaily(){
-  const dayKey=getDayKey();
-  if(currentUser.lastDay!==dayKey){
-    // Reset daily progress
-    const pool=[...Array(10)].map((_,i)=>`${currentUser.role==="wolf"?"Wolf Lore":"Hunter Chronicle"} #${i+1}`);
-    codex=pool;
-    codexUnlocked=0;
-    const questPool=questPools[currentUser.role];
-    quests=[];
-    for(let i=0;i<5;i++){
-      quests.push({text:questPool[Math.floor(Math.random()*questPool.length)],done:false});
-    }
-    huntsToday=0;
-    currentUser.lastDay=dayKey;
-    savePlayer();
-  }
-  renderQuests();
-  renderCodex();
-}
-
-function renderCodex(){
-  const div=document.getElementById("codexEntries");
-  div.innerHTML="";
-  codex.forEach((c,i)=>{
-    const p=document.createElement("p");
-    p.innerText=c;
-    if(i<codexUnlocked){ 
-      p.classList.add("event-active"); 
-    } else if(i===codexUnlocked){
-      p.style.cursor="pointer";
-      p.onclick=()=>{
-        codexUnlocked++;
-        prey+=15; xp+=10;
-        alert(`📜 You unlocked a Codex entry and earned 15 PREY + 10 XP!`);
-        renderCodex(); renderProfile(); savePlayer();
-      };
-    } else {
-      p.style.opacity="0.5";
-    }
-    div.appendChild(p);
-  });
-}
   // === Firebase Setup ===
   const firebaseConfig = {
     apiKey: "AIzaSyBz11XDhnqNwMyNUjqFpoC8lppEgCP-mew",

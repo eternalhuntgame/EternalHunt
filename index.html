@@ -952,7 +952,54 @@ function renderInitialUI(){
     ensureQuests(); resetHuntIfNewDay(); renderAll(); scheduleDailyReset(); startLeaderboardPolling();
   }
 }
+let currentUser = null;
 
+// On load, check if profile exists
+window.onload = async function() {
+  const saved = JSON.parse(localStorage.getItem("playerProfile"));
+  if (saved) {
+    currentUser = saved;
+    document.getElementById("profileSetup").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    renderProfile();
+    loadQuests();
+    loadCodex();
+    loadLeaderboard();
+  } else {
+    document.getElementById("profileSetup").classList.remove("hidden");
+  }
+};
+
+async function saveProfile() {
+  const username = document.getElementById("usernameInput").value.trim();
+  const role = document.getElementById("roleSelect").value;
+  if (!username) return alert("Enter a username!");
+
+  const profile = {
+    username, role,
+    prey: 0, strength: 1, level: 1, xp: 0,
+    createdAt: new Date().toISOString()
+  };
+
+  // Save to Firebase
+  await db.collection("players").doc(username).set(profile);
+
+  // Save locally
+  localStorage.setItem("playerProfile", JSON.stringify(profile));
+  currentUser = profile;
+
+  document.getElementById("profileSetup").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  renderProfile();
+  loadQuests(true);
+  loadCodex(true);
+  loadLeaderboard();
+}
+
+function renderProfile() {
+  document.getElementById("profileInfo").innerText =
+    `${currentUser.username} | Role: ${currentUser.role} | 🪙 PREY: ${currentUser.prey} | Lvl: ${currentUser.level}`;
+}
 /* --------- small helpers to expose functions for inline event handlers if any --------- */
 window.buyItem = buyItem;
 window.showMonetagAd = showMonetagAd;

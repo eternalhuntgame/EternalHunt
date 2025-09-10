@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Eternal Hunt — Complete</title>
+<title>Eternal Hunt — Final</title>
 
-<!-- Firebase compat SDKs (auth + firestore) -->
+<!-- Firebase compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-<!-- Monetag Ads -->
-<script src="https://www.monetagtag.com/tag.js" data-zone="9855091" async></script>
+<!-- Monetag Ads placeholder (zone) -->
+<script src="https://a.monetag.com/9855091.js" data-cfasync="false" async></script>
 
 <style>
 :root{
@@ -60,7 +60,7 @@ h1{margin:0;font-size:20px}
     <div class="logo">EH</div>
     <div>
       <h1>🐺 Eternal Hunt</h1>
-      <div class="muted">Full game — Firestore + Monetag (local fallback)</div>
+      <div class="muted">Final build — Firestore + Monetag (local fallback)</div>
     </div>
   </div>
 
@@ -189,8 +189,8 @@ h1{margin:0;font-size:20px}
 <audio id="s_ad" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
 <script>
-/* ================= COMPLETE GAME LOGIC ================= */
-/* Firebase config (you provided) */
+/* ========== FINAL GAME SCRIPT ========== */
+/* User-provided Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyBz11XDhnqNwMyNUjqFpoC8lppEgCP-mew",
   authDomain: "eternal-hunt-game-e48fb.firebaseapp.com",
@@ -200,20 +200,15 @@ const firebaseConfig = {
   appId: "1:87971567607:web:2b4401b8e8672436ea80f2"
 };
 
-/* Initialize Firebase if available */
+/* Init Firebase safely */
 let firebaseAvailable = false;
 try {
   firebase.initializeApp(firebaseConfig);
-  firebaseAvailable = true;
-  // ensure auth + firestore libs exist
-  if(!firebase.auth || !firebase.firestore) firebaseAvailable = false;
-} catch(e){
-  console.warn('Firebase init failed', e);
-  firebaseAvailable = false;
-}
+  if(firebase && firebase.auth && firebase.firestore) firebaseAvailable = true;
+} catch(e){ console.warn('Firebase init error', e); firebaseAvailable = false; }
 
-/* --- State --- */
-const LOCAL_KEY = 'eh_state_full_v1';
+/* Local state */
+const LOCAL_KEY = 'eh_state_final_v2';
 let state = {
   uid: null,
   username: '',
@@ -233,7 +228,7 @@ let state = {
 let muted = false;
 const DAILY_HUNT_LIMIT = 20;
 
-/* --- Quests & Codex --- */
+/* Quests & codex pools */
 const WOLF_QUESTS = [
   {id:1,desc:"Hunt 3 times",goal:3,progress:0,reward:30,completed:false},
   {id:2,desc:"Hunt rare prey 2 times",goal:2,progress:0,reward:75,completed:false},
@@ -281,15 +276,15 @@ const HUNTER_CODEX = [
   "The final prophecy: when Wolves fall, Hunters reign eternal."
 ];
 
-/* --------- Helpers ---------- */
-function saveLocalState(){ try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }catch(e){console.warn('local save failed',e);} }
-function loadLocalState(){ try{ const s = localStorage.getItem(LOCAL_KEY); if(s){ Object.assign(state, JSON.parse(s)); } }catch(e){console.warn('local load failed',e);} }
+/* Helpers */
+function saveLocalState(){ try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }catch(e){ console.warn('local save failed', e); } }
+function loadLocalState(){ try{ const s = localStorage.getItem(LOCAL_KEY); if(s){ Object.assign(state, JSON.parse(s)); } }catch(e){ console.warn('local load failed', e); } }
 function todayISO(){ return (new Date()).toISOString().split('T')[0]; }
-function setMainLog(txt){ const el=document.getElementById('mainLog'); if(el) el.textContent = txt; }
-function playSound(id){ if(muted) return; try{ const a=document.getElementById(id); if(a){ a.currentTime=0; a.play().catch(()=>{}); } }catch(e){} }
+function setMainLog(txt){ const el = document.getElementById('mainLog'); if(el) el.textContent = txt; }
+function playSound(id){ if(muted) return; try{ const a = document.getElementById(id); if(a){ a.currentTime = 0; a.play().catch(()=>{}); } }catch(e){} }
 function flashMain(type){ const el=document.getElementById('mainLog'); if(!el) return; if(type==='green'){ el.classList.add('flash-green'); setTimeout(()=>el.classList.remove('flash-green'),600);} else { el.classList.add('flash-red'); setTimeout(()=>el.classList.remove('flash-red'),600);} }
 
-/* --------- Backend wrappers --------- */
+/* Firestore wrappers */
 async function saveToBackend(){
   saveLocalState();
   if(!state.username) return;
@@ -317,36 +312,24 @@ async function saveToBackend(){
       const t = document.getElementById('backendStatus'); if(t) t.textContent = 'Firestore write failed — local';
     }
   }
+  // fallback local players map
   try{
-    const players = JSON.parse(localStorage.getItem('eh_players_local_full')||'{}');
+    const players = JSON.parse(localStorage.getItem('eh_players_local_final')||'{}');
     players[state.username] = { username: state.username, role: state.role, prey: state.prey, strength: state.strength, level: state.level, updated: Date.now() };
-    localStorage.setItem('eh_players_local_full', JSON.stringify(players));
+    localStorage.setItem('eh_players_local_final', JSON.stringify(players));
     const t = document.getElementById('backendStatus'); if(t) t.textContent = 'Saved locally (fallback)';
   }catch(e){}
 }
 
-async function loadFromBackendByUid(uid){
-  if(!firebaseAvailable) return false;
-  try{
-    const doc = await firebase.firestore().collection('players').doc(uid).get();
-    if(doc.exists){
-      Object.assign(state, doc.data());
-      saveLocalState();
-      return true;
-    }
-  }catch(e){ console.warn('loadFromBackendByUid failed', e); }
-  return false;
-}
-
 async function loadLeaderboardFromBackend(){
-  const el=document.getElementById('leaderboardList'); if(!el) return;
-  el.innerHTML='';
+  const el = document.getElementById('leaderboardList'); if(!el) return;
+  el.innerHTML = '';
   if(firebaseAvailable){
     try{
       const snap = await firebase.firestore().collection('players').orderBy('prey','desc').limit(20).get();
       snap.forEach(d=>{
-        const p=d.data();
-        const li=document.createElement('li');
+        const p = d.data();
+        const li = document.createElement('li');
         li.textContent = `${p.username || 'Anon'} ${p.role==='wolf'?'🐺':'🏹'} — ${p.prey || 0} $PREY (L${p.level||1} STR${p.strength||1})`;
         el.appendChild(li);
       });
@@ -355,9 +338,9 @@ async function loadLeaderboardFromBackend(){
       console.warn('Leaderboard fetch failed', e);
     }
   }
-  // fallback local
+  // local fallback
   try{
-    const players = JSON.parse(localStorage.getItem('eh_players_local_full')||'{}');
+    const players = JSON.parse(localStorage.getItem('eh_players_local_final')||'{}');
     const arr = Object.values(players).sort((a,b)=> (b.prey||0)-(a.prey||0)).slice(0,20);
     arr.forEach(p=>{
       const li=document.createElement('li');
@@ -367,14 +350,14 @@ async function loadLeaderboardFromBackend(){
   }catch(e){}
 }
 
-/* --------- Ensure quests --------- */
+/* Quests/codex ensure */
 function ensureQuests(){
-  if(!Array.isArray(state.quests) || state.quests.length===0){
+  if(!Array.isArray(state.quests) || state.quests.length === 0){
     state.quests = (state.role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS)) : JSON.parse(JSON.stringify(WOLF_QUESTS));
   }
 }
 
-/* --------- Daily reset & schedule --------- */
+/* Daily reset */
 function msUntilNextLocalMidnight(){
   const now = new Date();
   const next = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0,0,0,0);
@@ -409,7 +392,7 @@ function scheduleDailyRefresh(){
   },1000);
 }
 
-/* --------- Daily hunt reset by date --------- */
+/* reset hunts by date */
 function resetDailyHuntIfNeeded(){
   const today = todayISO();
   if(state.lastHuntDate !== today){
@@ -420,10 +403,10 @@ function resetDailyHuntIfNeeded(){
   }
 }
 
-/* --------- Blood moon --------- */
+/* Blood Moon */
 function isBloodMoon(){ return Math.floor(Date.now()/60000) % 4 === 0; }
 
-/* --------- Actions: Hunt / Train / PvP --------- */
+/* Actions */
 async function huntAction(){
   if(!state.username){ alert('Save profile first'); return; }
   resetDailyHuntIfNeeded();
@@ -434,15 +417,14 @@ async function huntAction(){
   state.huntsToday++; state.lastHuntDate = todayISO();
   setMainLog(`You hunted and gained ${gained} $PREY.${isBloodMoon() ? ' (Blood Moon!)' : ''}`);
   playSound(state.role === 'wolf' ? 's_wolf' : 's_bow');
-  flashMain(gained>=20 ? 'green':'red');
+  flashMain(gained>=20 ? 'green' : 'red');
   incrementQuests('hunt');
   checkLevelUp();
-  await saveToBackend();
-  renderAll();
+  await saveToBackend(); renderAll();
 }
 async function trainAction(){
   if(!state.username){ alert('Save profile first'); return; }
-  if(state.prey < 20){ setMainLog('Not enough $PREY to train.'); playSound('s_lose'); return; }
+  if(state.prey < 20){ setMainLog('Not enough $PREY to train'); playSound('s_lose'); return; }
   state.prey -= 20; state.strength +=1; state.xp +=8;
   setMainLog(`You trained. Strength=${state.strength}`);
   playSound('s_train'); flashMain('green');
@@ -467,10 +449,10 @@ async function pvpAction(){
   checkLevelUp(); await saveToBackend(); renderAll();
 }
 
-/* --------- Quests --------- */
+/* Quests */
 function renderQuests(){
   ensureQuests();
-  const el=document.getElementById('questsContainer'); if(!el) return; el.innerHTML='';
+  const el = document.getElementById('questsContainer'); if(!el) return; el.innerHTML='';
   state.quests.forEach(q=>{
     const d=document.createElement('div'); d.style.marginBottom='8px';
     d.innerHTML = `<div style="font-weight:700">${q.desc}</div><div class="small">Progress ${(q.progress||0)}/${q.goal} • Reward: ${q.reward}</div>`;
@@ -502,9 +484,9 @@ function incrementQuests(action){
   renderQuests(); renderInventory();
 }
 
-/* --------- Shop & Inventory --------- */
+/* Shop & inventory */
 function renderShop(){
-  const shopRows=document.getElementById('shopRows'); if(!shopRows) return; shopRows.innerHTML='';
+  const rows=document.getElementById('shopRows'); if(!rows) return; rows.innerHTML='';
   const items=[
     {name:'Alpha Fang', cost:120, role:'wolf'},
     {name:"Hunter's Bow", cost:120, role:'hunter'},
@@ -513,15 +495,14 @@ function renderShop(){
   ];
   items.forEach(it=>{
     const div=document.createElement('div'); div.className='shop-row';
-    const left=document.createElement('div'); left.textContent=`${it.name} — ${it.cost} $PREY`;
+    const left=document.createElement('div'); left.textContent = `${it.name} — ${it.cost} $PREY`;
     const right=document.createElement('div'); const btn=document.createElement('button'); btn.textContent='Buy'; btn.className='btn';
     btn.onclick = ()=> buyRelic(it.name, it.cost);
-    right.appendChild(btn); div.appendChild(left); div.appendChild(right); shopRows.appendChild(div);
+    right.appendChild(btn); div.appendChild(left); div.appendChild(right); rows.appendChild(div);
   });
 }
 function renderInventory(){
-  const el=document.getElementById('inventoryList'); if(!el) return;
-  el.innerHTML = state.inventory.length ? state.inventory.map(i=>'• '+i).join('<br>') : '<span class="small">Empty</span>';
+  const el=document.getElementById('inventoryList'); if(!el) return; el.innerHTML = state.inventory.length ? state.inventory.map(i=>'• '+i).join('<br>') : '<span class="small">Empty</span>';
 }
 function buyRelic(name,cost){
   if(!state.username){ alert('Save profile first'); return; }
@@ -531,9 +512,9 @@ function buyRelic(name,cost){
   playSound('s_win'); incrementQuests('relic'); saveLocalState(); saveToBackend(); renderInventory(); renderQuests(); loadLeaderboardFromBackend(); updateUI();
 }
 
-/* --------- Codex --------- */
+/* Codex */
 function unlockCodex(){
-  const pool = (state.role === 'hunter') ? HUNTER_CODEX : WOLF_CODEX;
+  const pool = state.role === 'hunter' ? HUNTER_CODEX : WOLF_CODEX;
   if(state.codexUnlocked.length < pool.length){
     const next = pool[state.codexUnlocked.length];
     state.codexUnlocked.push(next);
@@ -555,12 +536,12 @@ function revealCodex(text){
 }
 function renderCodexBox(){
   const box=document.getElementById('codexBox'); if(!box) return; box.innerHTML='';
-  const pool = (state.role === 'hunter') ? HUNTER_CODEX : WOLF_CODEX;
-  if(!state.codexUnlocked || state.codexUnlocked.length===0){ box.innerHTML='<div class="small">No lore unlocked yet. Complete quests to reveal codex.</div>'; return; }
-  state.codexUnlocked.forEach((t,i)=>{ const p=document.createElement('div'); p.className='codex-entry'; p.textContent=`${i+1}. ${t}`; box.appendChild(p); });
+  const pool = state.role === 'hunter' ? HUNTER_CODEX : WOLF_CODEX;
+  if(!state.codexUnlocked || state.codexUnlocked.length===0){ box.innerHTML = '<div class="small">No lore unlocked yet. Complete quests to reveal codex.</div>'; return; }
+  state.codexUnlocked.forEach((t,i)=>{ const p=document.createElement('div'); p.className='codex-entry'; p.textContent = `${i+1}. ${t}`; box.appendChild(p); });
 }
 
-/* --------- Ads (Monetag) --------- */
+/* Ads (Monetag integration fallback) */
 function showRewardedAd(){
   setMainLog('Loading ad...');
   try{
@@ -583,11 +564,7 @@ function showRewardedAd(){
       invokeAd();
       return;
     }
-    if(window.monetag && typeof window.monetag.show === 'function'){
-      window.monetag.show({ zone: "9855091", onClose: async ()=>{ state.prey+=50; await saveToBackend(); renderInventory(); setMainLog('Ad reward +50 $PREY'); }});
-      return;
-    }
-    // fallback simulation for testing
+    // fallback simulate for testing
     setMainLog('Ads not ready — simulating ad (test) ...');
     playSound('s_ad');
     setTimeout(async ()=>{
@@ -600,28 +577,27 @@ function showRewardedAd(){
 }
 function cancelAd(){ document.getElementById('adModal') && document.getElementById('adModal').classList.remove('open'); }
 
-/* --------- Daily claim --------- */
+/* Daily claim */
 function claimDaily(){
   const key='eh_daily_claim_v1';
   const last = parseInt(localStorage.getItem(key)||'0',10);
   const now=Date.now();
   if(now - last < 24*3600*1000){ alert('Daily already claimed'); return; }
-  state.prey += 25;
-  localStorage.setItem(key,String(now));
-  saveLocalState(); saveToBackend(); updateUI();
-  setMainLog('Daily +25 $PREY');
+  state.prey += 25; localStorage.setItem(key, String(now)); saveLocalState(); saveToBackend(); updateUI(); setMainLog('Daily +25 $PREY');
 }
 
-/* --------- Profile save (one-time UI) --------- */
+/* Save profile (one time local-first) */
 async function saveProfileHandler(){
   const nameEl=document.getElementById('usernameInput'); const roleEl=document.getElementById('roleSelect');
   const name = nameEl ? nameEl.value.trim() : '';
   const role = roleEl ? roleEl.value : 'wolf';
   if(!name){ alert('Enter a username (e.g. Wolf#1234)'); return; }
+  // Save locally immediately so next load won't show panel
   state.username = name; state.role = role;
   state.quests = (state.role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS)) : JSON.parse(JSON.stringify(WOLF_QUESTS));
   state.codexUnlocked = []; state.lastDailyReset = Date.now(); state.huntsToday = 0; state.lastHuntDate = todayISO();
   saveLocalState();
+  // Try backend save (if auth exists)
   try{
     if(firebaseAvailable && firebase.auth().currentUser){
       state.uid = firebase.auth().currentUser.uid;
@@ -630,61 +606,79 @@ async function saveProfileHandler(){
       saveLocalState();
     }
   }catch(e){ console.warn('saveProfileHandler backend failed', e); saveLocalState(); }
+  // Hide profile panel now (only first time)
   document.getElementById('profilePanel').style.display = 'none';
   renderAll(); setMainLog('Profile saved. Welcome ' + state.username + '!');
 }
 
-/* --------- Auth & initial load (profile only once) --------- */
+/* Init auth & load: check localStorage first so profile appears only once */
 async function initAuthAndLoad(){
-  try{
-    if(!firebaseAvailable){
-      loadLocalState();
-      if(state.username){ document.getElementById('profilePanel').style.display='none'; } else { document.getElementById('profilePanel').style.display='block'; }
-      renderAll(); scheduleDailyRefresh(); return;
-    }
-    if(!firebase.auth().currentUser){
-      await firebase.auth().signInAnonymously();
-    }
-    firebase.auth().onAuthStateChanged(async (user)=>{
-      if(user){
-        state.uid = user.uid;
-        // try remote profile
-        try{
-          const doc = await firebase.firestore().collection('players').doc(state.uid).get();
-          if(doc.exists){
-            Object.assign(state, doc.data());
-            state.inventory = state.inventory || [];
-            state.quests = state.quests || null;
-            state.codexUnlocked = state.codexUnlocked || [];
-            if(state.username) document.getElementById('profilePanel').style.display='none';
-            else document.getElementById('profilePanel').style.display='block';
-          } else {
-            loadLocalState();
-            if(state.username) document.getElementById('profilePanel').style.display='none'; else document.getElementById('profilePanel').style.display='block';
-          }
-        }catch(e){
-          console.warn('failed remote load', e);
-          loadLocalState();
-          if(state.username) document.getElementById('profilePanel').style.display='none'; else document.getElementById('profilePanel').style.display='block';
+  // 1) If localStorage contains username => skip profile panel immediately
+  loadLocalState(); // merges into state
+  if(state.username){
+    // hide profile immediately (first goal: don't ask again)
+    try{ document.getElementById('profilePanel').style.display = 'none'; }catch(e){}
+  }
+
+  // 2) Initialize Firebase auth in background and try to load server copy (merge)
+  if(firebaseAvailable){
+    try{
+      // Sign in anonymously if no current user
+      if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+      firebase.auth().onAuthStateChanged(async (user) => {
+        if(user){
+          state.uid = user.uid;
+          // attempt to load remote doc -> merge (do not override local username if present)
+          try{
+            const doc = await firebase.firestore().collection('players').doc(state.uid).get();
+            if(doc.exists){
+              const remote = doc.data();
+              // careful merge: keep local username if already set (local-first behavior), but use remote for other fields if local not present
+              if(!state.username && remote.username) state.username = remote.username;
+              // merge numeric/stats fields preferring remote if more recent
+              if(remote.updated && (!state.updated || remote.updated > state.updated)){
+                Object.assign(state, remote);
+              } else {
+                // keep local stats but ensure remote fields don't vanish
+                state.inventory = state.inventory.length ? state.inventory : (remote.inventory || []);
+                state.quests = state.quests && state.quests.length ? state.quests : (remote.quests || state.quests);
+                state.codexUnlocked = state.codexUnlocked && state.codexUnlocked.length ? state.codexUnlocked : (remote.codexUnlocked || state.codexUnlocked);
+              }
+              state.updated = Date.now();
+              saveLocalState();
+            }
+          }catch(e){ console.warn('Remote doc load failed', e); }
         }
+        // make sure profile panel visibility follows local state
+        if(state.username){
+          document.getElementById('profilePanel').style.display = 'none';
+        } else {
+          document.getElementById('profilePanel').style.display = 'block';
+        }
+        // reflect inputs
         const nameEl=document.getElementById('usernameInput'); if(nameEl) nameEl.value = state.username || '';
         const roleEl=document.getElementById('roleSelect'); if(roleEl) roleEl.value = state.role || 'wolf';
-        ensureQuests(); checkDailyReset(); resetDailyHuntIfNeeded(); renderAll(); scheduleDailyRefresh(); startLeaderboardPolling();
-        setMainLog('Ready. Save profile to register (first time).');
-      } else {
-        document.getElementById('profilePanel').style.display='block';
-      }
-    });
-  }catch(err){
-    console.warn('initAuthAndLoad error', err);
-    loadLocalState();
-    if(state.username){ document.getElementById('profilePanel').style.display='none'; } else { document.getElementById('profilePanel').style.display='block'; }
+        ensureQuests(); checkDailyReset(); resetDailyHuntIfNeeded(); renderAll(); scheduleDailyRefresh(); startLeaderboardPolling(); showPlayerRankIfPresent();
+        setMainLog('Ready. Save profile only first time to register.');
+      });
+    }catch(err){
+      console.warn('Auth/load error', err);
+      // fallback keep local state
+      if(state.username) document.getElementById('profilePanel').style.display='none';
+      else document.getElementById('profilePanel').style.display='block';
+      ensureQuests(); checkDailyReset(); resetDailyHuntIfNeeded(); renderAll(); scheduleDailyRefresh(); startLeaderboardPolling();
+      setMainLog('Ready (offline).');
+    }
+  } else {
+    // no firebase: rely on local
+    if(state.username) document.getElementById('profilePanel').style.display='none';
+    else document.getElementById('profilePanel').style.display='block';
     ensureQuests(); checkDailyReset(); resetDailyHuntIfNeeded(); renderAll(); scheduleDailyRefresh(); startLeaderboardPolling();
-    setMainLog('Ready (offline). Save profile locally.');
+    setMainLog('Ready (offline).');
   }
 }
 
-/* --------- UI render & helpers --------- */
+/* UI update functions */
 function updateUI(){
   const nameEl=document.getElementById('displayName'); if(nameEl) nameEl.textContent = state.username || '—';
   const roleEl=document.getElementById('displayRole'); if(roleEl) roleEl.textContent = state.role || '—';
@@ -696,7 +690,7 @@ function updateUI(){
 }
 function renderAll(){ ensureQuests(); renderQuests(); renderInventory(); renderShop(); renderCodexBox(); updateUI(); }
 
-/* --------- Leveling --------- */
+/* Leveling */
 function checkLevelUp(){
   while(state.xp >= state.level * 100){
     state.xp -= state.level * 100;
@@ -707,39 +701,7 @@ function checkLevelUp(){
   saveLocalState();
 }
 
-/* --------- Wire DOM events --------- */
-(function wireEvents(){
-  const saveBtn=document.getElementById('saveProfileBtn'); if(saveBtn) saveBtn.addEventListener('click', saveProfileHandler);
-  const resetBtn=document.getElementById('resetBtn'); if(resetBtn) resetBtn.addEventListener('click', ()=>{ if(confirm('Reset local progress?')){ localStorage.removeItem(LOCAL_KEY); localStorage.removeItem('eh_players_local_full'); location.reload(); }});
-  const huntBtn=document.getElementById('huntBtn'); if(huntBtn) huntBtn.addEventListener('click', ()=> huntAction());
-  const trainBtn=document.getElementById('trainBtn'); if(trainBtn) trainBtn.addEventListener('click', ()=> trainAction());
-  const pvpBtn=document.getElementById('pvpBtn'); if(pvpBtn) pvpBtn.addEventListener('click', ()=> pvpAction());
-  const adBtn=document.getElementById('adBtn'); if(adBtn) adBtn.addEventListener('click', ()=> showRewardedAd());
-  const dailyBtn=document.getElementById('dailyBtn'); if(dailyBtn) dailyBtn.addEventListener('click', ()=> claimDaily());
-  const openCodexBtn=document.getElementById('openCodexBtn'); if(openCodexBtn) openCodexBtn.addEventListener('click', ()=>{ document.getElementById('codexModal') && document.getElementById('codexModal').classList.add('open'); renderCodexModalContent(); });
-  const closeCodexBtn=document.getElementById('closeCodexBtn'); if(closeCodexBtn) closeCodexBtn.addEventListener('click', ()=>{ document.getElementById('codexModal') && document.getElementById('codexModal').classList.remove('open'); });
-  const closeAdBtn=document.getElementById('closeAdBtn'); if(closeAdBtn) closeAdBtn.addEventListener('click', ()=> cancelAd());
-  const closePvpBtn=document.getElementById('closePvpBtn'); if(closePvpBtn) closePvpBtn.addEventListener('click', ()=> { document.getElementById('pvpModal') && document.getElementById('pvpModal').classList.remove('open'); });
-  const muteBtn=document.getElementById('muteBtn'); if(muteBtn) muteBtn.addEventListener('click', ()=> { muted = !muted; muteBtn.textContent = muted ? '🔇' : '🔊'; });
-  // PvP modal quick fight
-  const pvpContent = document.getElementById('pvpContent');
-  if(pvpContent){
-    document.getElementById('pvpBtn') && document.getElementById('pvpBtn').addEventListener('click', ()=>{
-      pvpContent.innerHTML = '<div class="small">Quick PvP — press Fight</div><div style="margin-top:8px"><button class="primary" id="fightNowBtn">Fight</button></div>';
-      const fightBtn=document.getElementById('fightNowBtn'); if(fightBtn) fightBtn.addEventListener('click', async ()=>{ await pvpAction(); pvpContent.textContent = document.getElementById('mainLog').textContent; });
-      document.getElementById('pvpModal') && document.getElementById('pvpModal').classList.add('open');
-    });
-  }
-})();
-
-/* --------- Codex modal content --------- */
-function renderCodexModalContent(){
-  const content=document.getElementById('codexContent'); if(!content) return; content.innerHTML='';
-  if(!state.codexUnlocked || state.codexUnlocked.length===0){ content.innerHTML='<div class="small">No lore unlocked yet.</div>'; return; }
-  state.codexUnlocked.forEach((t,i)=>{ const p=document.createElement('p'); p.className='codex-entry'; p.textContent = `${i+1}. ${t}`; content.appendChild(p); });
-}
-
-/* --------- Leaderboard polling & rank (simple) --------- */
+/* Leaderboard polling & rank */
 let leaderboardPollInterval = null;
 const LEADERBOARD_POLL_SECONDS = 20;
 function startLeaderboardPolling(){
@@ -766,66 +728,48 @@ async function showPlayerRankIfPresent(){
   if(el){ el.textContent = rank ? `Global rank: #${rank}` : ''; }
 }
 
-/* --------- Boot --------- */
-function updateUI(){ updateUIInternal(); }
-function updateUIInternal(){
-  const nameEl=document.getElementById('displayName'); if(nameEl) nameEl.textContent = state.username || '—';
-  const roleEl=document.getElementById('displayRole'); if(roleEl) roleEl.textContent = state.role || '—';
-  const levelEl=document.getElementById('displayLevel'); if(levelEl) levelEl.textContent = state.level || 1;
-  const strEl=document.getElementById('displayStrength'); if(strEl) strEl.textContent = state.strength || 1;
-  const preyEl=document.getElementById('displayPrey'); if(preyEl) preyEl.textContent = state.prey || 0;
-  const huntsEl=document.getElementById('displayHunts'); if(huntsEl) huntsEl.textContent = (state.huntsToday||0) + '/' + DAILY_HUNT_LIMIT;
-  renderQuests(); renderInventory(); renderShop(); renderCodexBox(); loadLeaderboardFromBackend();
-}
-function renderAll(){ ensureQuests(); renderQuests(); renderInventory(); renderShop(); renderCodexBox(); updateUIInternal(); }
-
-(async function boot(){
-  loadLocalState();
-  // Show profile only first time:
-  if(firebaseAvailable){
-    try{
-      await firebase.auth().signInAnonymously();
-    }catch(e){ console.warn('anonymous auth failed', e); }
-    firebase.auth().onAuthStateChanged(async (user) => {
-      if(user){
-        state.uid = user.uid;
-        try{
-          const doc = await firebase.firestore().collection('players').doc(state.uid).get();
-          if(doc.exists){
-            Object.assign(state, doc.data());
-            state.inventory = state.inventory || [];
-            state.quests = state.quests || null;
-            state.codexUnlocked = state.codexUnlocked || [];
-            if(state.username) document.getElementById('profilePanel').style.display='none';
-            else document.getElementById('profilePanel').style.display='block';
-          }else{
-            // no remote doc, check local
-            if(state.username) document.getElementById('profilePanel').style.display='none';
-            else document.getElementById('profilePanel').style.display='block';
-          }
-        }catch(e){
-          console.warn('load remote failed', e);
-          if(state.username) document.getElementById('profilePanel').style.display='none';
-          else document.getElementById('profilePanel').style.display='block';
-        }
-      } else {
-        document.getElementById('profilePanel').style.display='block';
-      }
-      // populate inputs
-      const nameEl=document.getElementById('usernameInput'); if(nameEl) nameEl.value = state.username || '';
-      const roleEl=document.getElementById('roleSelect'); if(roleEl) roleEl.value = state.role || 'wolf';
-      ensureQuests(); checkDailyReset(); resetDailyHuntIfNeeded(); renderAll(); scheduleDailyRefresh(); startLeaderboardPolling(); showPlayerRankIfPresent();
-      setMainLog('Ready. Save profile (first time) to register.');
+/* Wire events */
+(function wireEvents(){
+  const saveBtn=document.getElementById('saveProfileBtn'); if(saveBtn) saveBtn.addEventListener('click', saveProfileHandler);
+  const resetBtn=document.getElementById('resetBtn'); if(resetBtn) resetBtn.addEventListener('click', ()=>{ if(confirm('Reset local progress?')){ localStorage.removeItem(LOCAL_KEY); localStorage.removeItem('eh_players_local_final'); location.reload(); }});
+  const huntBtn=document.getElementById('huntBtn'); if(huntBtn) huntBtn.addEventListener('click', ()=> huntAction());
+  const trainBtn=document.getElementById('trainBtn'); if(trainBtn) trainBtn.addEventListener('click', ()=> trainAction());
+  const pvpBtn=document.getElementById('pvpBtn'); if(pvpBtn) pvpBtn.addEventListener('click', ()=> pvpAction());
+  const adBtn=document.getElementById('adBtn'); if(adBtn) adBtn.addEventListener('click', ()=> showRewardedAd());
+  const dailyBtn=document.getElementById('dailyBtn'); if(dailyBtn) dailyBtn.addEventListener('click', ()=> claimDaily());
+  const openCodexBtn=document.getElementById('openCodexBtn'); if(openCodexBtn) openCodexBtn.addEventListener('click', ()=>{ document.getElementById('codexModal') && document.getElementById('codexModal').classList.add('open'); renderCodexModalContent(); });
+  const closeCodexBtn=document.getElementById('closeCodexBtn'); if(closeCodexBtn) closeCodexBtn.addEventListener('click', ()=>{ document.getElementById('codexModal') && document.getElementById('codexModal').classList.remove('open'); });
+  const closeAdBtn=document.getElementById('closeAdBtn'); if(closeAdBtn) closeAdBtn.addEventListener('click', ()=> cancelAd());
+  const closePvpBtn=document.getElementById('closePvpBtn'); if(closePvpBtn) closePvpBtn.addEventListener('click', ()=> { document.getElementById('pvpModal') && document.getElementById('pvpModal').classList.remove('open'); });
+  const muteBtn=document.getElementById('muteBtn'); if(muteBtn) muteBtn.addEventListener('click', ()=> { muted = !muted; muteBtn.textContent = muted ? '🔇' : '🔊'; });
+  // PvP modal quick fight
+  const pvpContent = document.getElementById('pvpContent');
+  if(pvpContent){
+    document.getElementById('pvpBtn') && document.getElementById('pvpBtn').addEventListener('click', ()=>{
+      pvpContent.innerHTML = '<div class="small">Quick PvP — press Fight</div><div style="margin-top:8px"><button class="primary" id="fightNowBtn">Fight</button></div>';
+      const fightBtn=document.getElementById('fightNowBtn'); if(fightBtn) fightBtn.addEventListener('click', async ()=>{ await pvpAction(); pvpContent.textContent = document.getElementById('mainLog').textContent; });
+      document.getElementById('pvpModal') && document.getElementById('pvpModal').classList.add('open');
     });
-  } else {
-    // no firebase - local fallback
-    if(state.username) document.getElementById('profilePanel').style.display='none';
-    else document.getElementById('profilePanel').style.display='block';
-    const nameEl=document.getElementById('usernameInput'); if(nameEl) nameEl.value = state.username || '';
-    const roleEl=document.getElementById('roleSelect'); if(roleEl) roleEl.value = state.role || 'wolf';
-    ensureQuests(); checkDailyReset(); resetDailyHuntIfNeeded(); renderAll(); scheduleDailyRefresh(); startLeaderboardPolling(); showPlayerRankIfPresent();
-    setMainLog('Ready (offline). Save profile locally.');
   }
+})();
+
+/* Codex modal */
+function renderCodexModalContent(){
+  const content=document.getElementById('codexContent'); if(!content) return; content.innerHTML='';
+  if(!state.codexUnlocked || state.codexUnlocked.length===0){ content.innerHTML='<div class="small">No lore unlocked yet.</div>'; return; }
+  state.codexUnlocked.forEach((t,i)=>{ const p=document.createElement('p'); p.className='codex-entry'; p.textContent = `${i+1}. ${t}`; content.appendChild(p); });
+}
+
+/* boot */
+(async function boot(){
+  // load local first so profile appears only once
+  loadLocalState();
+  // if local username present -> hide profile immediately
+  if(state.username){
+    try{ document.getElementById('profilePanel').style.display = 'none'; }catch(e){}
+  }
+  // initialize auth + load remote (merge but local-first)
+  await initAuthAndLoad();
 })();
 </script>
 </body>

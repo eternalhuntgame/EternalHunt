@@ -1,354 +1,715 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Monetag Ads -->
-  <script src="https://a.monetag.com/9855091.js" data-cfasync="false"></script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eternal Hunt Game</title>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
-
-  <!-- Monetag Ads -->
-  <script src="https://www.monetagtag.com/tag.js" data-zone="9855091" async></script>
-
   <style>
     body {
-      background: radial-gradient(circle, #0a0a0a, #1a1a1a);
-      font-family: 'Cinzel', serif;
-      color: #f5f5f5;
-      margin: 0; padding: 0;
-      display: flex; flex-direction: column; align-items: center;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      text-align: center;
     }
-    h1 { text-shadow: 0 0 15px red; }
-    .panel {
-      background: rgba(20,20,20,0.9);
-      border: 2px solid #444;
-      border-radius: 12px;
-      padding: 15px;
-      margin: 10px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 0 10px #000;
-    }
-    button {
-      background: linear-gradient(to right, #222, #444);
-      border: 1px solid #666;
-      color: white;
-      padding: 10px 15px;
-      margin: 5px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    button:hover { transform: scale(1.05); background: #550000; }
+    h1 { color: #ff4444; margin: 10px 0; }
     .hidden { display: none; }
-    .log { min-height: 60px; margin-top: 10px; }
+    .panel { padding: 15px; }
+    .tab-buttons button {
+      margin: 5px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      background: #333;
+      color: #eee;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .tab-buttons button.active {
+      background: #ff4444;
+      transform: scale(1.05);
+    }
+    .tab { display: none; padding: 20px; }
+    .tab.active { display: block; }
+    #mainLog { margin-top: 15px; font-style: italic; min-height: 24px; }
+    .event-active { color: #ff4444; font-weight: bold; animation: glow 1s infinite alternate; }
+    @keyframes glow {
+      from { text-shadow: 0 0 5px #f00; }
+      to { text-shadow: 0 0 20px #f00; }
+    }
+    ul { list-style: none; padding: 0; }
+    li { margin: 5px 0; }
   </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <!-- Monetag Ads -->
+  <script src="https://a.monetag.com/9855091.js" data-cfasync="false"></script>
 </head>
 <body>
-  <h1>🐺 Eternal Hunt 🏹</h1>
+  <h1>🐺 Eternal Hunt</h1>
 
-  <!-- Profile Setup -->
-  <div id="profilePanel" class="panel">
-    <h2>Profile</h2>
-    <input id="usernameInput" placeholder="Enter Discord Username"><br>
+  <!-- Profile Setup Panel -->
+  <div id="profilePanel" class="panel hidden">
+    <h2>Set Up Your Profile</h2>
+    <input id="usernameInput" placeholder="Enter Username" />
+    <br /><br />
     <select id="roleSelect">
       <option value="wolf">🐺 Wolf</option>
       <option value="hunter">🏹 Hunter</option>
-    </select><br>
+    </select>
+    <br /><br />
     <button onclick="saveProfile()">Save Profile</button>
   </div>
 
-  <!-- Game UI -->
-  <div id="gamePanel" class="hidden">
-    <div class="panel">
-      <h2>Actions</h2>
-      <button onclick="hunt()">🐾 Hunt</button>
-      <button onclick="train()">⚔️ Train</button>
-      <button onclick="pvp()">🩸 PvP</button>
-      <button onclick="showRewardedAd()">📺 Watch Ad</button>
-      <div id="mainLog" class="log">Welcome to Eternal Hunt...</div>
+  <!-- Game Panel -->
+  <div id="gamePanel" class="panel hidden">
+    <div id="stats"></div>
+    <div class="tab-buttons">
+      <button onclick="openTab('play')" class="active">Play</button>
+      <button onclick="openTab('quests')">Quests</button>
+      <button onclick="openTab('codex')">Codex</button>
+      <button onclick="openTab('shop')">Shop</button>
+      <button onclick="openTab('leaderboard')">Leaderboard</button>
+      <button onclick="openTab('ads')">Rewards</button>
     </div>
 
-    <div class="panel">
-      <h2>Stats</h2>
-      <p id="stats"></p>
+    <div id="play" class="tab active">
+      <h2>Play</h2>
+      <button onclick="hunt()">Hunt</button>
+      <button onclick="train()">Train</button>
+      <button onclick="pvp()">PvP</button>
+      <p id="bloodMoon"></p>
     </div>
 
-    <div class="panel">
+    <div id="quests" class="tab">
       <h2>Quests</h2>
       <ul id="questList"></ul>
     </div>
 
-    <div class="panel">
-      <h2>Codex</h2>
+    <div id="codex" class="tab">
+      <h2>Lore Codex</h2>
       <ul id="codexList"></ul>
     </div>
 
-    <div class="panel">
+    <div id="shop" class="tab">
       <h2>Relic Shop</h2>
-      <button onclick="buyRelic('Fang of the Alpha', 100)">Fang of the Alpha - 100 $PREY</button>
-      <button onclick="buyRelic('Moonlit Talisman', 200)">Moonlit Talisman - 200 $PREY</button>
-      <div id="inventory"></div>
+      <button onclick="buyRelic('Wolf Totem',200)">Wolf Totem (200 $PREY)</button>
+      <button onclick="buyRelic('Relic Shard',100)">Relic Shard (100 $PREY)</button>
+      <button onclick="buyRelic('Potion',50)">Potion (50 $PREY)</button>
+      <p id="inventory"></p>
     </div>
 
-    <div class="panel">
+    <div id="leaderboard" class="tab">
       <h2>Leaderboard</h2>
-      <ol id="leaderboard"></ol>
+      <ol id="leaderboardList"></ol>
     </div>
+
+    <div id="ads" class="tab">
+      <h2>Ad Rewards</h2>
+      <button onclick="showRewardedAd()">🎁 Watch Ad for +50 $PREY</button>
+    </div>
+
+    <p id="mainLog"></p>
   </div>
+  <script>
+/* ================= Part 2 — Game logic (plug into Part 1) ================= */
 
-<script>
-  // --- Firebase Setup ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyBz11XDhnqNwMyNUjqFpoC8lppEgCP-mew",
-    authDomain: "eternal-hunt-game-e48fb.firebaseapp.com",
-    projectId: "eternal-hunt-game-e48fb",
-    storageBucket: "eternal-hunt-game-e48fb.appspot.com",
-    messagingSenderId: "87971567607",
-    appId: "1:87971567607:web:2b4401b8e8672436ea80f2"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  // --- Check if profile exists on load ---
-firebase.auth().onAuthStateChanged(async (user) => {
-  if (user) {
-    // Try to fetch player profile from Firestore
-    const doc = await db.collection("players").doc(user.uid).get();
-    if (doc.exists) {
-      player = doc.data();
+/* --- State and defaults --- */
+const LOCAL_KEY = 'eh_state_final_v1';
+let state = {
+  uid: null,
+  username: '',
+  role: 'wolf',
+  prey: 0,
+  strength: 1,
+  level: 1,
+  xp: 0,
+  inventory: [],
+  quests: null,
+  codexUnlocked: [],
+  lastDailyReset: 0,
+  huntsToday: 0,
+  lastHuntDate: '' // ISO date string
+};
 
-      // Hide profile panel, show game directly
-      document.getElementById("profilePanel").classList.add("hidden");
-      document.getElementById("gamePanel").classList.remove("hidden");
+let muted = false;
+const DAILY_HUNT_LIMIT = 20;
 
-      // Load UI data
-      loadQuests();
-      loadCodex();
-      updateStats();
-      loadLeaderboard();
+/* --- Role quests & codex pools (10 quests each / 9 codex entries) --- */
+const WOLF_QUESTS = [
+  {id:1,desc:"Hunt 3 times",goal:3,progress:0,reward:30,completed:false},
+  {id:2,desc:"Hunt rare prey 2 times",goal:2,progress:0,reward:75,completed:false},
+  {id:3,desc:"Win 2 PvP battles",goal:2,progress:0,reward:"Alpha Fang",completed:false},
+  {id:4,desc:"Train 3 times",goal:3,progress:0,reward:25,completed:false},
+  {id:5,desc:"Collect 150 $PREY",goal:150,progress:0,reward:100,completed:false},
+  {id:6,desc:"Reach Strength 5",goal:5,progress:0,reward:80,completed:false},
+  {id:7,desc:"Own 2 relics",goal:2,progress:0,reward:90,completed:false},
+  {id:8,desc:"Win 5 PvP battles",goal:5,progress:0,reward:140,completed:false},
+  {id:9,desc:"Hunt 20 times",goal:20,progress:0,reward:160,completed:false},
+  {id:10,desc:"Complete Wolf questline",goal:9,progress:0,reward:300,completed:false}
+];
+
+const HUNTER_QUESTS = [
+  {id:1,desc:"Hunt 4 times",goal:4,progress:0,reward:30,completed:false},
+  {id:2,desc:"Complete 3 hunts",goal:3,progress:0,reward:30,completed:false},
+  {id:3,desc:"Win 2 PvP battles",goal:2,progress:0,reward:"Hunter's Bow",completed:false},
+  {id:4,desc:"Train 4 times",goal:4,progress:0,reward:25,completed:false},
+  {id:5,desc:"Collect 160 $PREY",goal:160,progress:0,reward:110,completed:false},
+  {id:6,desc:"Reach Strength 5",goal:5,progress:0,reward:80,completed:false},
+  {id:7,desc:"Own 1 relic",goal:1,progress:0,reward:70,completed:false},
+  {id:8,desc:"Win 5 PvP battles",goal:5,progress:0,reward:150,completed:false},
+  {id:9,desc:"Hunt 25 times",goal:25,progress:0,reward:160,completed:false},
+  {id:10,desc:"Complete Hunter questline",goal:9,progress:0,reward:300,completed:false}
+];
+
+const WOLF_CODEX = [
+  "The First Howl shook the skies when the Alpha rose.",
+  "Under the Blood Moon, wolves gained strength beyond mortal limits.",
+  "The Relics were crafted from the bones of fallen gods.",
+  "The Totem of the Alpha binds the pack as one spirit.",
+  "The Eternal Fang can slay even the undying.",
+  "Whispers tell of a hidden Moon Temple deep in shadow forests.",
+  "Loyal wolves who fall return as Spirits of the Eternal Hunt.",
+  "Only the strongest Alpha may challenge the Eternal Alpha.",
+  "The final prophecy: when Hunters fall, Wolves ascend eternal."
+];
+
+const HUNTER_CODEX = [
+  "The first Hunters swore an oath under starlight.",
+  "Silver arrows were forged to pierce the wolves’ hide.",
+  "The Order of the Hunt was founded to protect mankind.",
+  "The Charm of Precision guided arrows through darkness.",
+  "The Relic of Ancients once belonged to the First Hunter.",
+  "The Cloak of the Eternal Hunt conceals the chosen.",
+  "Hunters believe wolves carry fragments of cursed gods.",
+  "To slay the Alpha is to claim the Hunt’s Crown.",
+  "The final prophecy: when Wolves fall, Hunters reign eternal."
+];
+
+/* ---------------- Helpers ---------------- */
+function saveLocalState(){
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch(e){ console.warn('local save failed',e); }
+}
+function loadLocalState(){
+  try { const s = localStorage.getItem(LOCAL_KEY); if(s) { const parsed = JSON.parse(s); Object.assign(state, parsed); } } catch(e){ console.warn('local load failed',e); }
+}
+function setMainLog(txt){ const el = document.getElementById('mainLog'); if(el) el.textContent = txt; }
+function playSound(id){ if(muted) return; try{ const a = document.getElementById(id); if(a){ a.currentTime = 0; a.play().catch(()=>{}); } } catch(e){} }
+function flashMain(type){ const el = document.getElementById('mainLog'); if(!el) return; if(type==='green'){ el.classList.add('flash-green'); setTimeout(()=>el.classList.remove('flash-green'),600);} else { el.classList.add('flash-red'); setTimeout(()=>el.classList.remove('flash-red'),600);} }
+function todayISO(){ return (new Date()).toISOString().split('T')[0]; }
+
+/* ---------------- Firebase auth & load-once logic ---------------- */
+async function initAuthAndLoad(){
+  try {
+    // sign in anonymously if no user
+    if (!firebase.auth().currentUser) {
+      await firebase.auth().signInAnonymously();
+    }
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        state.uid = user.uid;
+        // Try to load player doc
+        try {
+          const docRef = firebase.firestore().collection('players').doc(state.uid);
+          const doc = await docRef.get();
+          if (doc.exists) {
+            const remote = doc.data();
+            // Merge remote into local state but keep any local keys if needed
+            state = Object.assign(state, remote);
+            // Ensure fields exist
+            state.username = state.username || '';
+            state.role = state.role || 'wolf';
+            state.inventory = state.inventory || [];
+            state.quests = state.quests || null;
+            // Hide profile panel if username exists
+            if (state.username) {
+              document.getElementById('profilePanel').style.display = 'none';
+              document.getElementById('gamePanel').style.display = 'block';
+            } else {
+              document.getElementById('profilePanel').style.display = 'block';
+              document.getElementById('gamePanel').style.display = 'none';
+            }
+          } else {
+            // no doc yet: show profile panel for first-time
+            document.getElementById('profilePanel').style.display = 'block';
+            document.getElementById('gamePanel').style.display = 'none';
+          }
+        } catch(e){
+          console.warn('Firestore read failed, falling back to local', e);
+          loadLocalState();
+          // if local state has username, hide profile
+          if(state.username) {
+            document.getElementById('profilePanel').style.display = 'none';
+            document.getElementById('gamePanel').style.display = 'block';
+          } else {
+            document.getElementById('profilePanel').style.display = 'block';
+          }
+        }
+        // Finalize UI
+        if(document.getElementById('usernameInput')) document.getElementById('usernameInput').value = state.username || '';
+        if(document.getElementById('roleSelect')) document.getElementById('roleSelect').value = state.role || 'wolf';
+        ensureQuests();
+        checkDailyReset();
+        resetDailyHuntIfNeeded();
+        renderAll();
+        setMainLog('Ready. Save profile to register (if first time).');
+      } else {
+        // no user - show profile
+        document.getElementById('profilePanel').style.display = 'block';
+        document.getElementById('gamePanel').style.display = 'none';
+      }
+    });
+  } catch(err){
+    console.warn('Auth init failed', err);
+    // fallback: just use local state and show profile if no username
+    loadLocalState();
+    if(state.username){ document.getElementById('profilePanel').style.display = 'none'; document.getElementById('gamePanel').style.display = 'block'; }
+    else { document.getElementById('profilePanel').style.display = 'block'; document.getElementById('gamePanel').style.display = 'none'; }
+    ensureQuests();
+    checkDailyReset();
+    resetDailyHuntIfNeeded();
+    renderAll();
+  }
+}
+
+/* ---------------- Profile save (one-time UI behavior) ---------------- */
+async function saveProfile(){
+  const nameEl = document.getElementById('usernameInput');
+  const roleEl = document.getElementById('roleSelect');
+  const name = nameEl ? nameEl.value.trim() : '';
+  const role = roleEl ? roleEl.value : 'wolf';
+  if(!name){ alert('Please enter a username (e.g. Wolf#1234)'); return; }
+
+  state.username = name;
+  state.role = role;
+  // initialize quests/codex if missing or role changed
+  state.quests = (state.role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS)) : JSON.parse(JSON.stringify(WOLF_QUESTS));
+  state.codexUnlocked = [];
+  state.lastDailyReset = Date.now();
+  state.huntsToday = 0;
+  state.lastHuntDate = todayISO();
+
+  // Save to Firestore under UID if available
+  try {
+    if(state.uid){
+      await firebase.firestore().collection('players').doc(state.uid).set(state, { merge:true });
+      document.getElementById('backendStatus') && (document.getElementById('backendStatus').textContent = 'Saved to Firestore');
     } else {
-      // No profile saved yet → show profile setup
-      document.getElementById("profilePanel").classList.remove("hidden");
+      saveLocalState();
     }
+  } catch(e){
+    console.warn('Save to Firestore failed', e);
+    saveLocalState();
+  }
+
+  // Hide profile panel and reveal game
+  document.getElementById('profilePanel').style.display = 'none';
+  document.getElementById('gamePanel').style.display = 'block';
+  renderAll();
+  setMainLog('Profile saved. Welcome ' + state.username + '!');
+}
+
+/* ---------------- Daily reset logic (quests & codex) ---------------- */
+function checkDailyReset(){
+  const now = Date.now();
+  const last = state.lastDailyReset || 0;
+  // Reset at midnight UTC (optional) OR after 24 hours; here we use 24h since last reset
+  if(!last || now - last >= 24*3600*1000){
+    // reset quests and codex unlocks
+    state.quests = (state.role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS)) : JSON.parse(JSON.stringify(WOLF_QUESTS));
+    state.codexUnlocked = [];
+    state.lastDailyReset = now;
+    saveLocalState();
+    try{ if(state.uid) firebase.firestore().collection('players').doc(state.uid).update({ quests: state.quests, codexUnlocked: state.codexUnlocked, lastDailyReset: state.lastDailyReset }); }catch(e){}
+  }
+}
+
+/* ---------------- Daily hunts reset by date ---------------- */
+function resetDailyHuntIfNeeded(){
+  const today = todayISO();
+  if(state.lastHuntDate !== today){
+    state.huntsToday = 0;
+    state.lastHuntDate = today;
+    saveLocalState();
+    try{ if(state.uid) firebase.firestore().collection('players').doc(state.uid).update({ huntsToday: state.huntsToday, lastHuntDate: state.lastHuntDate }); }catch(e){}
+  }
+}
+
+/* ---------------- Ensure quests exist ---------------- */
+function ensureQuests(){
+  if(!state.quests || !Array.isArray(state.quests)){
+    state.quests = (state.role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS)) : JSON.parse(JSON.stringify(WOLF_QUESTS));
+  }
+}
+
+/* ---------------- Game actions: Hunt, Train, PvP ---------------- */
+async function doHunt(){
+  if(!state.username){ alert('Save profile first'); return; }
+  resetDailyHuntIfNeeded();
+  if(state.huntsToday >= DAILY_HUNT_LIMIT){ setMainLog("You've reached the daily hunt limit. Come back tomorrow."); return; }
+
+  const base = Math.floor(Math.random()*12)+6;
+  const isBlood = Math.floor(Date.now()/60000)%4===0;
+  const gained = isBlood ? base*2 : base;
+  state.prey += gained; state.xp += 12;
+  state.huntsToday++;
+  state.lastHuntDate = todayISO();
+
+  setMainLog(`You hunted and gained ${gained} $PREY.${isBlood ? ' (Blood Moon!)' : ''}`);
+  playSound(state.role === 'wolf' ? 's_wolf' : 's_bow');
+  flashMain(gained >= 20 ? 'green' : 'red');
+
+  incrementQuests('hunt');
+  checkLevelUp();
+  await saveToBackend();
+  renderAll();
+}
+async function doTrain(){
+  if(!state.username){ alert('Save profile first'); return; }
+  if(state.prey < 20){ setMainLog('Not enough $PREY to train.'); playSound('s_lose'); return; }
+  state.prey -= 20; state.strength += 1; state.xp += 8;
+  setMainLog(`You trained. Strength now ${state.strength}`);
+  playSound('s_train'); flashMain('green');
+  incrementQuests('train'); checkLevelUp();
+  await saveToBackend(); renderAll();
+}
+async function doPvp(){
+  if(!state.username){ alert('Save profile first'); return; }
+  const enemy = { name: 'Rival'+Math.floor(Math.random()*90+10), strength: Math.max(1, state.strength + (Math.floor(Math.random()*3)-1))};
+  const pRoll = Math.floor(Math.random()*20) + state.strength;
+  const eRoll = Math.floor(Math.random()*20) + enemy.strength;
+  if(pRoll >= eRoll){
+    const reward = Math.ceil(10 + Math.random()*30);
+    state.prey += reward; state.xp += 14;
+    setMainLog(`Victory! You beat ${enemy.name} (STR ${enemy.strength}). +${reward} $PREY`);
+    playSound('s_win'); incrementQuests('pvpwin');
   } else {
-    // Not signed in → anonymous login
-    await firebase.auth().signInAnonymously();
+    const loss = Math.min(state.prey, Math.ceil(8 + Math.random()*18));
+    state.prey -= loss; state.xp += 4;
+    setMainLog(`Defeat... lost ${loss} $PREY to ${enemy.name} (STR ${enemy.strength}).`);
+    playSound('s_lose'); incrementQuests('pvploss');
   }
-});
-</script>
-<script>
-  let player = {
-    username: "",
-    role: "",
-    prey: 0,
-    strength: 1,
-    relics: [],
-    huntsToday: 0,
-    lastHuntDate: "",
-  };
+  checkLevelUp(); await saveToBackend(); renderAll();
+}
 
-  const dailyHuntLimit = 50;
+/* ------------- Quests & Codex functions ------------- */
+function renderQuests(){
+  ensureQuests();
+  const el = document.getElementById('questList'); if(!el) return;
+  el.innerHTML = '';
+  state.quests.forEach(q=>{
+    const d = document.createElement('li');
+    d.innerHTML = `<strong>${q.desc}</strong> — <span class="small">${(q.progress||0)}/${q.goal}</span> • Reward: ${q.reward}`;
+    if(q.completed) d.style.opacity = '.6';
+    el.appendChild(d);
+  });
+}
+function incrementQuests(action){
+  let anyCompleted=false;
+  state.quests.forEach(q=>{
+    if(q.completed) return;
+    const t = q.desc.toLowerCase();
+    if(action==='hunt' && t.includes('hunt')) q.progress = (q.progress||0)+1;
+    if(action==='train' && t.includes('train')) q.progress = (q.progress||0)+1;
+    if(action==='pvpwin' && t.includes('win')) q.progress = (q.progress||0)+1;
+    if(action==='pvploss' && t.includes('survive')) q.progress = (q.progress||0)+1;
+    if(action==='relic' && t.includes('own')) q.progress = state.inventory.length;
+    if(t.includes('collect') && state.prey >= q.goal) q.progress = q.goal;
+    if(t.includes('strength') && state.strength >= q.goal) q.progress = q.goal;
+    if(t.includes('level') && state.level >= q.goal) q.progress = q.goal;
 
-  // --- Utility ---
-  function todayStr() {
-    return new Date().toISOString().split("T")[0];
-  }
-
-  function updateStats() {
-    document.getElementById("stats").innerText =
-      `User: ${player.username}\n` +
-      `Role: ${player.role}\n` +
-      `Strength: ${player.strength}\n` +
-      `$PREY: ${player.prey}\n` +
-      `Relics: ${player.relics.join(", ") || "None"}\n` +
-      `Hunts Today: ${player.huntsToday}/${dailyHuntLimit}`;
-  }
-
-  function logMessage(msg) {
-    document.getElementById("mainLog").innerText = msg;
-  }
-
-  // --- Profile ---
-  async function saveProfile() {
-    const username = document.getElementById("usernameInput").value.trim();
-    const role = document.getElementById("roleSelect").value;
-
-    if (!username) {
-      alert("Please enter a username");
-      return;
+    if(q.progress >= q.goal && !q.completed){
+      q.completed = true;
+      if(typeof q.reward === 'number'){ state.prey += q.reward; setMainLog(`Quest "${q.desc}" complete: +${q.reward} $PREY`); flashMain('green'); }
+      else { state.inventory.push(q.reward); setMainLog(`Quest "${q.desc}" complete: received ${q.reward}`); flashMain('green'); }
+      anyCompleted = true;
     }
+  });
+  if(anyCompleted){ unlockCodex(); saveLocalState(); saveToBackend(); }
+  renderQuests(); renderInventory();
+}
 
-    player.username = username;
-    player.role = role;
+/* ------------- Shop & Inventory ------------- */
+function renderShop(){
+  const container = document.getElementById('shopRows'); if(!container) return;
+  container.innerHTML = '';
+  const items = [
+    {name:'Alpha Fang', cost:120, role:'wolf'},
+    {name:"Hunter's Bow", cost:120, role:'hunter'},
+    {name:'Moon Totem', cost:160, role:'any'},
+    {name:'Cloak of Shadows', cost:160, role:'any'}
+  ];
+  items.forEach(it=>{
+    const div = document.createElement('div'); div.className='shop-row';
+    div.innerHTML = `<div>${it.name} — ${it.cost} $PREY</div>`;
+    const btn = document.createElement('button'); btn.textContent='Buy'; btn.onclick = ()=> buyRelic(it.name,it.cost);
+    div.appendChild(btn);
+    container.appendChild(div);
+  });
+}
+function renderInventory(){
+  const el = document.getElementById('inventory');
+  if(!el) return;
+  el.innerHTML = state.inventory.length ? state.inventory.map(i=>'• '+i).join('<br>') : '<span class="small">Empty</span>';
+}
+function buyRelic(name,cost){
+  if(!state.username){ alert('Save profile first'); return; }
+  if(state.prey < cost){ document.getElementById('shopMessage') && (document.getElementById('shopMessage').textContent = 'Not enough $PREY.'); playSound('s_lose'); return; }
+  state.prey -= cost; state.inventory.push(name);
+  document.getElementById('shopMessage') && (document.getElementById('shopMessage').textContent = `Bought ${name}.`);
+  playSound('s_win'); incrementQuests('relic'); saveLocalState(); saveToBackend(); renderInventory(); renderQuests(); loadLeaderboardFromBackend(); renderAll();
+}
 
-    // Save to Firestore
-    await db.collection("players").doc(username).set(player, { merge: true });
-
-    document.getElementById("profilePanel").classList.add("hidden");
-    document.getElementById("gamePanel").classList.remove("hidden");
-
-    loadQuests();
-    loadCodex();
-    updateStats();
-    loadLeaderboard();
+/* ------------- Codex ------------- */
+function unlockCodex(){
+  const pool = state.role === 'hunter' ? HUNTER_CODEX : WOLF_CODEX;
+  if(state.codexUnlocked.length < pool.length){
+    const next = pool[state.codexUnlocked.length];
+    state.codexUnlocked.push(next);
+    revealCodex(next);
+    saveLocalState();
   }
-
-  // --- Hunt ---
-  async function hunt() {
-    if (player.lastHuntDate !== todayStr()) {
-      player.huntsToday = 0;
-      player.lastHuntDate = todayStr();
-    }
-
-    if (player.huntsToday >= dailyHuntLimit) {
-      logMessage("⚠️ You reached the daily hunt limit!");
-      return;
-    }
-
-    const gain = Math.floor(Math.random() * 20) + 5;
-    player.prey += gain;
-    player.huntsToday++;
-    logMessage(`You hunted and earned ${gain} $PREY! 🐾`);
-
-    await savePlayer();
-    updateStats();
-    loadLeaderboard();
-  }
-
-  // --- Train ---
-  async function train() {
-    player.strength++;
-    logMessage("You trained and grew stronger! ⚔️");
-    await savePlayer();
-    updateStats();
-  }
-
-  // --- PvP ---
-  function pvp() {
-    logMessage("PvP coming soon... 🩸");
-  }
-
-  // --- Shop ---
-  async function buyRelic(name, cost) {
-    if (player.prey < cost) {
-      logMessage("Not enough $PREY!");
-      return;
-    }
-    player.prey -= cost;
-    player.relics.push(name);
-    logMessage(`You bought ${name}!`);
-    await savePlayer();
-    updateStats();
-    document.getElementById("inventory").innerText =
-      "Inventory: " + player.relics.join(", ");
-  }
-
-  // --- Firestore Save ---
-  async function savePlayer() {
-    await db.collection("players").doc(player.username).set(player, { merge: true });
-  }
-
-  // --- Leaderboard ---
-  async function loadLeaderboard() {
-    const snapshot = await db.collection("players").orderBy("prey", "desc").limit(10).get();
-    const lb = document.getElementById("leaderboard");
-    lb.innerHTML = "";
-    snapshot.forEach(doc => {
-      const p = doc.data();
-      const li = document.createElement("li");
-      li.innerText = `${p.username} (${p.role}) - ${p.prey} $PREY`;
-      lb.appendChild(li);
-    });
-  }
-
-  // --- Quests ---
-  function loadQuests() {
-    const wolfQuests = [
-      "Track a lone stag in the mist.",
-      "Howl under the blood moon.",
-      "Guard the den from intruders.",
-      "Chase prey through the snow.",
-      "Battle a rival wolf pack.",
-      "Protect the Alpha’s legacy.",
-      "Scout the hunting grounds.",
-      "Test fangs on stone effigy.",
-      "Run with the night wind.",
-      "Defy the silent hunters."
-    ];
-    const hunterQuests = [
-      "Sharpen arrows under starlight.",
-      "Scout wolf tracks in forest.",
-      "Protect village from the hunt.",
-      "Challenge a rival hunter.",
-      "Set traps under moonlight.",
-      "Recover relic from ruins.",
-      "Test bow against shadows.",
-      "Guard the sacred fire.",
-      "Hunt the beast of legend.",
-      "Record lore in codex."
-    ];
-
-    const qList = document.getElementById("questList");
-    qList.innerHTML = "";
-    const quests = player.role === "wolf" ? wolfQuests : hunterQuests;
-    quests.forEach(q => {
-      const li = document.createElement("li");
-      li.innerText = q;
-      qList.appendChild(li);
-    });
-  }
-
-  // --- Codex ---
-  function loadCodex() {
-    const wolfCodex = [
-      "The Moon guides every hunt.",
-      "Wolves thrive in eternal night.",
-      "The Alpha’s blood runs eternal.",
-      "Fangs carry forgotten power.",
-      "Only the pack survives."
-    ];
-    const hunterCodex = [
-      "Hunters protect the balance.",
-      "Arrows fly under oath of dawn.",
-      "The hunt must never consume.",
-      "Relics guide humanity’s path.",
-      "Legends live in fire and ink."
-    ];
-
-    const cList = document.getElementById("codexList");
-    cList.innerHTML = "";
-    const codex = player.role === "wolf" ? wolfCodex : hunterCodex;
-    codex.forEach(e => {
-      const li = document.createElement("li");
-      li.innerText = e;
-      cList.appendChild(li);
-    });
-  }
-
-  // --- Ads ---
-  function showRewardedAd() {
-  logMessage("🎬 Loading rewarded ad...");
-
-  // Call Monetag ad
-  if (typeof invokeAd === "function") {
-    invokeAd();
-
-    // Simulate reward callback (you must confirm exact callback in Monetag docs)
-    document.addEventListener("monetagAdComplete", async () => {
-      player.prey += 50;
-      await savePlayer();
-      updateStats();
-      loadLeaderboard();
-      logMessage("✅ You earned +50 $PREY for watching an ad!");
-    });
+}
+function revealCodex(text){
+  // open simple modal effect using codex modal in DOM if present
+  const modal = document.getElementById('codexModal');
+  if(modal){
+    modal.classList.add('open');
+    const content = document.getElementById('codexContent'); content.innerHTML = '';
+    const p = document.createElement('p'); p.className='typing'; p.textContent = '';
+    content.appendChild(p);
+    let i=0; const t = setInterval(()=>{ if(i<text.length){ p.textContent += text[i++]; } else { clearInterval(t); p.classList.remove('typing'); renderCodexBox(); } }, 30);
   } else {
-    logMessage("⚠️ Ad service not available right now.");
+    // fallback: just append to codexBox
+    state.codexUnlocked.push(text);
+    renderCodexBox();
   }
- }
+}
+function renderCodexBox(){
+  const box = document.getElementById('codexBox'); if(!box) return;
+  box.innerHTML = '';
+  const pool = state.role === 'hunter' ? HUNTER_CODEX : WOLF_CODEX;
+  if(!state.codexUnlocked || state.codexUnlocked.length===0){ box.innerHTML = '<div class="small">No lore unlocked yet. Complete quests to reveal codex.</div>'; return; }
+  state.codexUnlocked.forEach((t,i)=>{ const p = document.createElement('div'); p.className='codex-entry'; p.textContent = `${i+1}. ${t}`; box.appendChild(p); });
+}
+
+/* ------------- Monetag rewarded ad (real + graceful fallback) ------------- */
+function showRewardedAd(){
+  setMainLog('Loading ad...');
+  // Monetag may expose a function like Monetag.invoke or Monetag.showInterstitial — implement common options
+  try {
+    if(window.Monetag && typeof Monetag.showInterstitial === 'function'){
+      Monetag.showInterstitial({
+        zoneId: "9855091",
+        onClose: async () => {
+          state.prey += 50; saveLocalState(); await saveToBackend(); renderInventory(); loadLeaderboardFromBackend(); setMainLog('Ad complete: +50 $PREY'); playSound('s_ad');
+        },
+        onError: (err) => {
+          console.warn('Monetag interstitial error', err);
+          setMainLog('Ad failed. Granting fallback reward.');
+          // fallback: simulate small reward or none
+          state.prey += 10; saveLocalState(); saveToBackend(); renderInventory(); loadLeaderboardFromBackend();
+        }
+      });
+      return;
+    }
+    // some Monetag instances provide invokeAd()
+    if(typeof invokeAd === 'function'){
+      // Listen for a custom event 'monetagAdComplete' (some integrations do this), fallback to simulation
+      const onComplete = async ()=>{ state.prey += 50; saveLocalState(); await saveToBackend(); renderInventory(); loadLeaderboardFromBackend(); setMainLog('Ad finished: +50 $PREY'); playSound('s_ad'); document.removeEventListener('monetagAdComplete', onComplete); };
+      document.addEventListener('monetagAdComplete', onComplete);
+      invokeAd(); // call Monetag's generic ad trigger
+      return;
+    }
+
+    // If Monetag not ready, try a different global name
+    if(window.monetag && typeof window.monetag.show === 'function'){
+      window.monetag.show({ zone: "9855091", onClose: async ()=>{ state.prey+=50; await saveToBackend(); renderInventory(); setMainLog('Ad reward +50 $PREY'); }});
+      return;
+    }
+
+    // Last fallback: simulate ad with timer (so developers can test)
+    setMainLog('Ads not ready — simulating ad for testing...');
+    playSound('s_ad');
+    setTimeout(async ()=>{
+      state.prey += 50;
+      await saveToBackend();
+      renderInventory();
+      loadLeaderboardFromBackend();
+      setMainLog('Simulated ad complete: +50 $PREY');
+    }, 3000);
+  } catch(err){
+    console.error('Ad error', err);
+    setMainLog('Ad failed. Try again later.');
+  }
+}
+
+/* ------------- Save/Load backend wrappers (Firestore with local fallback) ------------- */
+async function saveToBackend(){
+  saveLocalState();
+  if(!state.username) return;
+  try {
+    if(firebase && firebase.firestore && state.uid){
+      await firebase.firestore().collection('players').doc(state.uid).set({
+        username: state.username,
+        role: state.role,
+        prey: state.prey,
+        strength: state.strength,
+        level: state.level,
+        xp: state.xp,
+        inventory: state.inventory || [],
+        quests: state.quests || [],
+        codexUnlocked: state.codexUnlocked || [],
+        lastDailyReset: state.lastDailyReset || Date.now(),
+        huntsToday: state.huntsToday || 0,
+        lastHuntDate: state.lastHuntDate || todayISO(),
+        updated: Date.now()
+      }, { merge: true });
+      document.getElementById('backendStatus') && (document.getElementById('backendStatus').textContent = 'Saved to Firestore');
+      return;
+    }
+  } catch(e){
+    console.warn('Firestore write failed', e);
+    document.getElementById('backendStatus') && (document.getElementById('backendStatus').textContent = 'Firestore write failed — local fallback');
+  }
+  // fallback local players map
+  try {
+    const players = JSON.parse(localStorage.getItem('eh_players_local_final')||'{}');
+    players[state.username] = { username: state.username, role: state.role, prey: state.prey, strength: state.strength, level: state.level, updated: Date.now() };
+    localStorage.setItem('eh_players_local_final', JSON.stringify(players));
+    document.getElementById('backendStatus') && (document.getElementById('backendStatus').textContent = 'Saved locally (fallback)');
+  } catch(e){}
+}
+
+async function loadFromBackendByUid(uid){
+  try {
+    const doc = await firebase.firestore().collection('players').doc(uid).get();
+    if(doc.exists){
+      const data = doc.data();
+      Object.assign(state, data);
+      saveLocalState();
+      return true;
+    }
+  } catch(e){
+    console.warn('loadFromBackendByUid failed', e);
+  }
+  return false;
+}
+
+/* ------------- Leaderboard ------------- */
+async function loadLeaderboardFromBackend(){
+  const el = document.getElementById('leaderboardList'); if(!el) return;
+  el.innerHTML = '';
+  try {
+    const snap = await firebase.firestore().collection('players').orderBy('prey','desc').limit(20).get();
+    snap.forEach(d => {
+      const p = d.data();
+      const li = document.createElement('li');
+      li.textContent = `${p.username || 'Anon'} ${p.role==='wolf'?'🐺':'🏹'} — ${p.prey || 0} $PREY (L${p.level||1} STR${p.strength||1})`;
+      el.appendChild(li);
+    });
+    return;
+  } catch(e){
+    console.warn('Leaderboard fetch failed', e);
+  }
+  // fallback: local
+  try {
+    const players = JSON.parse(localStorage.getItem('eh_players_local_final')||'{}');
+    const arr = Object.values(players).sort((a,b)=> (b.prey||0) - (a.prey||0) ).slice(0,20);
+    arr.forEach(p=>{
+      const li = document.createElement('li');
+      li.textContent = `${p.username} — ${p.prey} $PREY`;
+      el.appendChild(li);
+    });
+  } catch(e){}
+}
+
+/* ------------- UI render + helpers ------------- */
+function updateUI(){
+  // top stats box
+  const statsEl = document.getElementById('stats');
+  if(statsEl){
+    statsEl.innerHTML = `
+      <div><strong>${state.username || '—'}</strong> <span class="small">(${state.role || '—'})</span></div>
+      <div class="small">Level ${state.level} • STR ${state.strength} • $PREY ${state.prey}</div>
+      <div class="small">Hunts today: ${state.huntsToday}/${DAILY_HUNT_LIMIT}</div>
+    `;
+  }
+  renderQuests();
+  renderInventory();
+  renderShop();
+  renderCodexBox();
+  loadLeaderboardFromBackend();
+}
+function renderAll(){ ensureQuests(); updateUI(); }
+
+/* ------------- Leveling (simple) ------------- */
+function checkLevelUp(){
+  while(state.xp >= (state.level * 100)){
+    state.xp -= (state.level * 100);
+    state.level++;
+    setMainLog(`Leveled up! You are now L${state.level}`);
+    flashMain('green');
+  }
+  saveLocalState();
+}
+
+/* ------------- Utility wrappers bound to UI names from Part 1 ------------- */
+async function saveProfileBtnHandler(){ return saveProfile(); }
+async function doHunt(){ return doHuntWrapper(); }
+async function doHuntWrapper(){ await doHunt(); }
+async function doTrain(){ await doTrain(); }
+async function doPvp(){ await doPvp(); }
+
+/* ------------- Tab helper (from Part1 UI) ------------- */
+function openTab(id){
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
+  // update tab button active state (if you used Part1's tab buttons)
+  document.querySelectorAll('.tab-buttons button').forEach(b => b.classList.remove('active'));
+  const btn = Array.from(document.querySelectorAll('.tab-buttons button')).find(x=> x.getAttribute('onclick') && x.getAttribute('onclick').includes(id));
+  if(btn) btn.classList.add('active');
+}
+
+/* ------------- Simple sound triggers (IDs exist in Part1 markup) ------------- */
+function playSoundIfReady(name){
+  try { playSound(name); } catch(e) {}
+}
+
+/* ------------- Expose functions for inline use and wire events ------------- */
+window.saveProfile = saveProfile;
+window.hunt = async ()=> { await doHunt(); };
+window.train = async ()=> { await doTrain(); };
+window.pvp = async ()=> { await doPvp(); };
+window.buyRelic = buyRelic;
+window.showRewardedAd = showRewardedAd;
+window.openTab = openTab;
+
+/* ----------------- Initialization on page load ----------------- */
+(function boot(){
+  // load local copy first
+  loadLocalState();
+  // wire simple UI elements (if present) to our functions without changing UI markup
+  if(document.getElementById('saveProfileBtn')){
+    document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+  }
+  // If the Part1 used buttons with those ids:
+  if(document.getElementById('huntBtn')) document.getElementById('huntBtn').addEventListener('click', ()=>doHunt());
+  if(document.getElementById('trainBtn')) document.getElementById('trainBtn').addEventListener('click', ()=>doTrain());
+  if(document.getElementById('pvpBtn')) document.getElementById('pvpBtn').addEventListener('click', ()=>doPvp());
+  if(document.getElementById('adBtn')) document.getElementById('adBtn').addEventListener('click', ()=>showRewardedAd());
+  if(document.getElementById('openCodexBtn')) document.getElementById('openCodexBtn').addEventListener('click', ()=>{ document.getElementById('codexModal') && document.getElementById('codexModal').classList.add('open'); renderCodexModalContent(); });
+  if(document.getElementById('closeCodexBtn')) document.getElementById('closeCodexBtn').addEventListener('click', ()=>{ document.getElementById('codexModal') && document.getElementById('codexModal').classList.remove('open'); });
+  if(document.getElementById('closeAdBtn')) document.getElementById('closeAdBtn').addEventListener('click', cancelAd);
+  if(document.getElementById('muteBtn')) document.getElementById('muteBtn').addEventListener('click', ()=>{ muted = !muted; document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊'; });
+
+  // Finally initialize auth & load remote profile if exists
+  initAuthAndLoad();
+})();
 </script>
-</body>
-</html>

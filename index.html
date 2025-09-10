@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Monetag Ads -->
+  <script src="https://a.monetag.com/9855091.js" data-cfasync="false"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Eternal Hunt Game</title>
@@ -303,16 +305,24 @@
 
   // --- Ads ---
   function showRewardedAd() {
-    logMessage("Ad placeholder showing... if completed, +50 $PREY!");
-    // Simulate reward
-    setTimeout(async () => {
+  logMessage("🎬 Loading rewarded ad...");
+
+  // Call Monetag ad
+  if (typeof invokeAd === "function") {
+    invokeAd();
+
+    // Simulate reward callback (you must confirm exact callback in Monetag docs)
+    document.addEventListener("monetagAdComplete", async () => {
       player.prey += 50;
       await savePlayer();
       updateStats();
       loadLeaderboard();
-      logMessage("You earned +50 $PREY from ad reward! 🎁");
-    }, 3000);
+      logMessage("✅ You earned +50 $PREY for watching an ad!");
+    });
+  } else {
+    logMessage("⚠️ Ad service not available right now.");
   }
+ }
 </script>
 </body>
 </html>

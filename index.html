@@ -1,51 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eternal Hunt Game</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+
+  <!-- Monetag Ads -->
+  <script src="https://www.monetagtag.com/tag.js" data-zone="9855091" async></script>
+
+  <!-- Styles -->
+  <style>
+    body {
+      background: radial-gradient(circle, #0a0a0a, #1a1a1a);
+      font-family: 'Cinzel', serif;
+      color: #f5f5f5;
+      margin: 0; padding: 0;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    h1 { text-shadow: 0 0 15px red; }
+    .panel {
+      background: rgba(20,20,20,0.9);
+      border: 2px solid #444;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 10px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 10px #000;
+    }
+    button {
+      background: linear-gradient(to right, #222, #444);
+      border: 1px solid #666;
+      color: white;
+      padding: 10px 15px;
+      margin: 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover { transform: scale(1.05); background: #550000; }
+    .hidden { display: none; }
+    .log { min-height: 60px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🐺 Eternal Hunt 🏹</h1>
+
+  <!-- Profile Setup -->
+  <div id="profilePanel" class="panel">
+    <h2>Profile</h2>
+    <input id="usernameInput" placeholder="Enter Discord Username"><br>
+    <select id="roleSelect">
+      <option value="wolf">🐺 Wolf</option>
+      <option value="hunter">🏹 Hunter</option>
+    </select><br>
+    <button onclick="saveProfile()">Save Profile</button>
+  </div>
+
+  <!-- Game Panels -->
+  <div id="gamePanel" class="hidden">
+    <div class="panel">
+      <h2>Actions</h2>
+      <button onclick="hunt()">🐾 Hunt</button>
+      <button onclick="train()">⚔️ Train</button>
+      <button onclick="pvp()">🩸 PvP</button>
+      <button onclick="showRewardedAd()">📺 Watch Ad</button>
+      <div id="mainLog" class="log">Welcome to Eternal Hunt...</div>
+    </div>
+
+    <div class="panel">
+      <h2>Stats</h2>
+      <p id="stats"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Quests</h2>
+      <ul id="questList"></ul>
+    </div>
+
+    <div class="panel">
+      <h2>Codex</h2>
+      <ul id="codexList"></ul>
+    </div>
+
+    <div class="panel">
+      <h2>Relic Shop</h2>
+      <button onclick="buyRelic('Fang of the Alpha', 100)">Fang of the Alpha - 100 $PREY</button>
+      <button onclick="buyRelic('Moonlit Talisman', 200)">Moonlit Talisman - 200 $PREY</button>
+      <div id="inventory"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Leaderboard</h2>
+      <ol id="leaderboard"></ol>
+    </div>
+  </div>
+  <script>
+/* ------------------ Firebase Setup ------------------ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBz11XDhnqNwMyNUjqFpoC8lppEgCP-mew",
+  authDomain: "eternal-hunt-game-e48fb.firebaseapp.com",
+  projectId: "eternal-hunt-game-e48fb",
+  storageBucket: "eternal-hunt-game-e48fb.firebasestorage.app",
+  messagingSenderId: "87971567607",
+  appId: "1:87971567607:web:2b4401b8e8672436ea80f2"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ------------------ Game State ------------------ */
+let username = "";
+let role = "";
+let prey = 0;
+let strength = 1;
+let wins = 0;
+let dailyHunts = 0;
+const dailyLimit = 10;
+let inventory = [];
+
+/* ------------------ Profile ------------------ */
+async function saveProfile() {
+  username = document.getElementById("usernameInput").value.trim();
+  role = document.getElementById("roleSelect").value;
+
+  if (!username) {
+    alert("Please enter a username.");
+    return;
+  }
+
+  document.getElementById("profilePanel").classList.add("hidden");
+  document.getElementById("gamePanel").classList.remove("hidden");
+
+  // Load or create profile in Firestore
+  const userRef = db.collection("players").doc(username);
+  const docSnap = await userRef.get();
+
+  if (docSnap.exists) {
+    let data = docSnap.data();
+    prey = data.prey || 0;
+    strength = data.strength || 1;
+    wins = data.wins || 0;
+    inventory = data.inventory || [];
+    dailyHunts = data.dailyHunts || 0;
+  } else {
+    await userRef.set({
+      username,
+      role,
+      prey,
+      strength,
+      wins,
+      inventory,
+      dailyHunts
+    });
+  }
+
+  updateStats();
+  loadQuests();
+  loadCodex();
+  updateInventory();
+  updateLeaderboard();
+}
+
+/* ------------------ Actions ------------------ */
+function setMainLog(msg) {
+  document.getElementById("mainLog").innerText = msg;
+}
+
+async function hunt() {
+  if (dailyHunts >= dailyLimit) {
+    setMainLog("⚠️ Daily Hunt limit reached!");
+    return;
+  }
+  dailyHunts++;
+  let gain = Math.floor(Math.random() * 20) + 5;
+  prey += gain;
+  setMainLog(`🐾 Hunt successful! Gained ${gain} $PREY.`);
+  playSound("hunt");
+  updateStats();
+  await saveProgress();
+}
+
+async function train() {
+  strength++;
+  setMainLog("⚔️ Training complete! Strength +1.");
+  playSound("train");
+  updateStats();
+  await saveProgress();
+}
+
+async function pvp() {
+  let result = Math.random() < 0.5;
+  if (result) {
+    wins++;
+    let gain = Math.floor(Math.random() * 30) + 10;
+    prey += gain;
+    setMainLog(`🩸 Victory in PvP! +${gain} $PREY.`);
+  } else {
+    setMainLog("💀 You lost the PvP match...");
+  }
+  playSound("pvp");
+  updateStats();
+  await saveProgress();
+}
+
+/* ------------------ Shop ------------------ */
+async function buyRelic(item, cost) {
+  if (prey >= cost) {
+    prey -= cost;
+    inventory.push(item);
+    setMainLog(`🛒 Bought ${item}!`);
+    updateInventory();
+    updateStats();
+    await saveProgress();
+  } else {
+    setMainLog("⚠️ Not enough $PREY!");
+  }
+}
+
+function updateInventory() {
+  document.getElementById("inventory").innerHTML = "<h3>Inventory:</h3>" +
+    inventory.map(i => `<p>🔹 ${i}</p>`).join("");
+}
+
+/* ------------------ Quests & Codex ------------------ */
+function loadQuests() {
+  const questList = document.getElementById("questList");
+  questList.innerHTML = "";
+  let quests = role === "wolf" ? wolfQuests : hunterQuests;
+  quests.forEach(q => {
+    let li = document.createElement("li");
+    li.textContent = q;
+    questList.appendChild(li);
+  });
+}
+
+function loadCodex() {
+  const codexList = document.getElementById("codexList");
+  codexList.innerHTML = "";
+  let codex = role === "wolf" ? wolfCodex : hunterCodex;
+  codex.forEach(e => {
+    let li = document.createElement("li");
+    li.textContent = e;
+    codexList.appendChild(li);
+  });
+}
+
+const wolfQuests = [
+  "Hunt under the Blood Moon",
+  "Challenge a rival wolf",
+  "Guard the pack's den",
+  "Scout enemy territory",
+  "Gather moon herbs",
+  "Lead a midnight howl",
+  "Track the hunter's trail",
+  "Defend the Alpha",
+  "Train the pups",
+  "Claim sacred grounds"
+];
+const hunterQuests = [
+  "Stalk the night prey",
+  "Sharpen your blade",
+  "Hunt a shadow wolf",
+  "Collect silver arrows",
+  "Protect the village",
+  "Study wolf tracks",
+  "Defeat a rival hunter",
+  "Light the warding fire",
+  "Patrol the forest",
+  "Seek the Alpha's lair"
+];
+
+const wolfCodex = [
+  "The Alpha's Fang holds the power of the pack.",
+  "Blood Moon awakens primal fury.",
+  "Ancient howls echo through the eternal woods."
+];
+const hunterCodex = [
+  "Silver arrows pierce the eternal hunt.",
+  "Hunters guard humanity from the night.",
+  "The eternal hunt never ends."
+];
+
+/* ------------------ Sounds ------------------ */
+function playSound(action) {
+  let audio = new Audio();
+  if (action === "hunt") audio.src = "https://www.fesliyanstudios.com/play-mp3/4386";
+  if (action === "train") audio.src = "https://www.fesliyanstudios.com/play-mp3/387";
+  if (action === "pvp") audio.src = "https://www.fesliyanstudios.com/play-mp3/6293";
+  audio.play();
+}
+
+/* ------------------ Monetag Rewarded Ads ------------------ */
+function showRewardedAd() {
+  try {
+    Monetag.showInterstitial({
+      zoneId: "9855091",
+      onClose: async () => {
+        prey += 50;
+        setMainLog("🎁 Thanks for watching! +50 $PREY earned.");
+        updateStats();
+        await saveProgress();
+      },
+      onError: (err) => {
+        console.error("Monetag Ad Error:", err);
+        setMainLog("⚠️ Ad failed to load. Try again later.");
+      }
+    });
+  } catch (e) {
+    console.error("Monetag not available:", e);
+    setMainLog("⚠️ Ads not ready. Try again.");
+  }
+}
+
+/* ------------------ Stats & Leaderboard ------------------ */
+function updateStats() {
+  document.getElementById("stats").innerHTML = `
+    👤 ${username} (${role})<br>
+    🐾 $PREY: ${prey}<br>
+    ⚔️ Strength: ${strength}<br>
+    🩸 Wins: ${wins}<br>
+    🎯 Daily Hunts: ${dailyHunts}/${dailyLimit}
+  `;
+}
+
+async function saveProgress() {
+  await db.collection("players").doc(username).set({
+    username,
+    role,
+    prey,
+    strength,
+    wins,
+    inventory,
+    dailyHunts
+  });
+  updateLeaderboard();
+}
+
+async function updateLeaderboard() {
+  const lbRef = await db.collection("players")
+    .orderBy("prey", "desc")
+    .limit(10)
+    .get();
+
+  const lb = document.getElementById("leaderboard");
+  lb.innerHTML = "";
+  lbRef.forEach(doc => {
+    let data = doc.data();
+    let li = document.createElement("li");
+    li.textContent = `${data.username} - ${data.prey} $PREY`;
+    lb.appendChild(li);
+  });
+}
+</script>
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Eternal Hunt — Complete</title>
-<link rel="preconnect" href="https://fonts.gstatic.com">
-<style>
-:root{
-  --bg:#05040a; --card:#0f1116; --muted:#9aa2a8; --text:#eef0f6;
-  --accent:#ff3b5c; --accent-2:#ff8a9b; --success:#2ecc71;
-  --radius:12px; --shadow:0 8px 30px rgba(0,0,0,.45);
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#02020a,#0b0b12);color:var(--text);-webkit-font-smoothing:antialiased}
-.wrap{max-width:1100px;margin:18px auto;padding:18px}
-.header{display:flex;gap:12px;align-items:center}
-.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#06060a;box-shadow:var(--shadow)}
-h1{margin:0;font-size:20px}
-.muted{color:var(--muted);font-size:13px}
-.panel{margin-top:14px;border-radius:var(--radius);overflow:hidden;border:1px solid rgba(255,255,255,.03);background:linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.005));box-shadow:var(--shadow)}
-.panel-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:default}
-.panel-body{padding:14px;display:block}
-.row{display:flex;gap:8px;align-items:center}
-.stat{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:8px;font-weight:700}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.btn{padding:10px 12px;border-radius:10px;border:0;background:#111;color:var(--text);cursor:pointer;font-weight:800;transition:transform .12s}
-.btn:active{transform:scale(.98)}
-.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#06060a;box-shadow:0 8px 30px rgba(255,59,92,.08)}
-.ghost{background:transparent;border:1px solid rgba(255,255,255,.04)}
-.log{margin-top:12px;padding:12px;border-radius:10px;background:#06060a;min-height:72px;border:1px solid rgba(255,255,255,.02);white-space:pre-wrap}
-.small{font-size:13px;color:var(--muted)}
-.shop-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,.01);margin-bottom:8px}
-.codex-entry{opacity:0;transform:translateY(8px);animation:codexFade .5s forwards;margin-bottom:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,.01)}
-@keyframes codexFade{to{opacity:1;transform:none}}
-.typing{border-right:2px solid var(--accent);white-space:nowrap;overflow:hidden;display:inline-block}
-.glow{color:var(--accent);text-shadow:0 0 10px rgba(255,59,92,.12)}
-.flash-green{animation:flashGreen .6s}
-@keyframes flashGreen{0%{background:rgba(46,204,113,.12)}100%{background:transparent}}
-.flash-red{animation:flashRed .6s}
-@keyframes flashRed{0%{background:rgba(255,59,92,.12)}100%{background:transparent}}
-.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:300;padding:12px}
-.modal.open{display:flex}
-.panel-compact{padding:8px}
-@media(max-width:980px){.row{flex-direction:column;align-items:flex-start}.controls{flex-direction:column}.btn{width:100%}}
-/* small badges */
-.badge{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.03);font-weight:700}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Eternal Hunt — Complete</title>
+
+  <!-- Fonts (optional) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&display=swap" rel="stylesheet">
+
+  <!-- Monetag Ads (your zone) -->
+  <script src="https://www.monetagtag.com/tag.js" data-zone="9855091" async></script>
+
+  <!-- Firebase compat SDK (works directly in browser) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <style>
+  :root{
+    --bg:#05040a; --card:#0f1116; --muted:#9aa2a8; --text:#eef0f6;
+    --accent:#ff3b5c; --accent-2:#ff8a9b; --success:#2ecc71;
+    --radius:12px; --shadow:0 10px 36px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#02020a,#0b0b12);color:var(--text);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:18px auto;padding:18px}
+  .header{display:flex;gap:12px;align-items:center}
+  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#06060a;box-shadow:var(--shadow)}
+  h1{margin:0;font-size:20px}
+  .muted{color:var(--muted);font-size:13px}
+  .panel{margin-top:14px;border-radius:var(--radius);overflow:hidden;border:1px solid rgba(255,255,255,.03);background:linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.005));box-shadow:var(--shadow)}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:default}
+  .panel-body{padding:14px;display:block}
+  .row{display:flex;gap:8px;align-items:center}
+  .stat{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:8px;font-weight:700}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .btn{padding:10px 12px;border-radius:10px;border:0;background:#111;color:var(--text);cursor:pointer;font-weight:700;transition:transform .12s}
+  .btn:active{transform:scale(.98)}
+  .primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#06060a;box-shadow:0 8px 30px rgba(255,59,92,.08)}
+  .ghost{background:transparent;border:1px solid rgba(255,255,255,.04)}
+  .log{margin-top:12px;padding:12px;border-radius:10px;background:#06060a;min-height:72px;border:1px solid rgba(255,255,255,.02);white-space:pre-wrap}
+  .small{font-size:13px;color:var(--muted)}
+  .shop-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,.01);margin-bottom:8px}
+  .codex-entry{opacity:0;transform:translateY(8px);animation:codexFade .5s forwards;margin-bottom:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,.01)}
+  @keyframes codexFade{to{opacity:1;transform:none}}
+  .typing{border-right:2px solid var(--accent);white-space:nowrap;overflow:hidden;display:inline-block}
+  .glow{color:var(--accent);text-shadow:0 0 10px rgba(255,59,92,.12)}
+  .flash-green{animation:flashGreen .6s}
+  @keyframes flashGreen{0%{background:rgba(46,204,113,.12)}100%{background:transparent}}
+  .flash-red{animation:flashRed .6s}
+  @keyframes flashRed{0%{background:rgba(255,59,92,.12)}100%{background:transparent}}
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:300;padding:12px}
+  .modal.open{display:flex}
+  .panel-compact{padding:8px}
+  @media(max-width:980px){.row{flex-direction:column;align-items:flex-start}.controls{flex-direction:column}.btn{width:100%}}
+  .hidden{display:none}
+  .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.03);font-weight:700}
+  </style>
 </head>
 <body>
 <div class="wrap">
@@ -53,7 +421,7 @@ h1{margin:0;font-size:20px}
     <div class="logo">EH</div>
     <div>
       <h1>🐺 Eternal Hunt</h1>
-      <div class="muted">Complete game — Firebase integrated with local fallback</div>
+      <div class="muted">Complete game — Firestore + Monetag rewarded ads</div>
     </div>
   </div>
 
@@ -85,7 +453,7 @@ h1{margin:0;font-size:20px}
     </div>
   </div>
 
-  <!-- Top play panel -->
+  <!-- Play Panel -->
   <div class="panel" id="playPanel">
     <div class="panel-header">
       <div><strong>🎮 Play</strong></div>
@@ -161,7 +529,7 @@ h1{margin:0;font-size:20px}
     </div>
     <div class="panel-body">
       <ol id="leaderboardList" class="small"></ol>
-      <div class="small" style="margin-top:8px">Tip: open from other devices & save profile to simulate others.</div>
+      <div class="small" style="margin-top:8px">Tip: open the page on another browser/device and save profile to simulate other players.</div>
     </div>
   </div>
 </div>
@@ -179,13 +547,9 @@ h1{margin:0;font-size:20px}
 <audio id="s_lose" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
 <audio id="s_ad" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
-<!-- Firebase compat CDN (works directly in browser) -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
 <script>
-/* ================== Firebase init (compat) ================== */
-/* Replace the firebaseConfig values with your own if different */
+/* ================== Firebase (compat) ================== */
+/* Use your firebase config (you provided earlier) */
 const firebaseConfig = {
   apiKey: "AIzaSyBz11XDhnqNwMyNUjqFpoC8lppEgCP-mew",
   authDomain: "eternal-hunt-game-e48fb.firebaseapp.com",
@@ -201,13 +565,13 @@ try {
   db = firebase.firestore();
   firebaseAvailable = true;
   document.getElementById('backendStatus').textContent = 'Backend: Firestore connected';
-} catch (e){
-  console.warn('Firebase init failed:', e);
-  document.getElementById('backendStatus').textContent = 'Backend: Firestore unavailable (local fallback)';
+} catch (e) {
+  console.warn('Firebase init failed', e);
+  document.getElementById('backendStatus').textContent = 'Backend: Firestore unavailable — local fallback';
 }
 
-/* ================== Game state & config ================== */
-const LOCAL_KEY = 'eh_state_v3';
+/* ================== State & Local Storage ================== */
+const LOCAL_KEY = 'eh_state_v4';
 let state = loadLocalState() || {
   username: '',
   role: 'wolf',
@@ -221,11 +585,11 @@ let state = loadLocalState() || {
 };
 
 let muted = false;
-const DAILY_HUNT_LIMIT = 20; // configurable
-let huntsToday = parseInt(localStorage.getItem('eh_hunts_today')||'0',10);
-let lastHuntReset = parseInt(localStorage.getItem('eh_hunt_reset_ts') || String(Date.now()),10);
+const DAILY_HUNT_LIMIT = 20;
+let huntsToday = parseInt(localStorage.getItem('eh_hunts_today_v4')||'0',10);
+let lastHuntReset = parseInt(localStorage.getItem('eh_hunt_reset_ts_v4') || String(Date.now()),10);
 
-/* Role data: 10 quests each and codex entries (9 each) */
+/* Role quests and codex (10 quests / 9 codex each) */
 const WOLF_QUESTS = [
   {id:1,desc:"Hunt 3 times",goal:3,progress:0,reward:30,completed:false},
   {id:2,desc:"Hunt rare prey 2 times",goal:2,progress:0,reward:75,completed:false},
@@ -276,7 +640,7 @@ const HUNTER_CODEX = [
 ];
 
 /* ================== Helpers ================== */
-function loadLocalState(){ try{ const s=JSON.parse(localStorage.getItem(LOCAL_KEY)); return s; }catch(e){return null;} }
+function loadLocalState(){ try{ return JSON.parse(localStorage.getItem(LOCAL_KEY)); }catch(e){return null;} }
 function saveLocalState(){ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }
 function sanitizeId(s){ return s.replace(/[.#$\/\[\]]/g,'_'); }
 function setMainLog(txt){ document.getElementById('mainLog').textContent = txt; }
@@ -308,9 +672,9 @@ async function saveToBackend(){
     }
   }
   // fallback: save to local players map
-  const players = JSON.parse(localStorage.getItem('eh_players_local_v2')||'{}');
+  const players = JSON.parse(localStorage.getItem('eh_players_local_v3')||'{}');
   players[state.username] = { username: state.username, role: state.role, prey: state.prey, strength: state.strength, level: state.level, updated: Date.now() };
-  localStorage.setItem('eh_players_local_v2', JSON.stringify(players));
+  localStorage.setItem('eh_players_local_v3', JSON.stringify(players));
   document.getElementById('backendStatus').textContent = 'Saved locally (fallback)';
 }
 
@@ -340,7 +704,7 @@ async function loadFromBackend(username){
       document.getElementById('backendStatus').textContent = 'Firestore read failed — local fallback';
     }
   }
-  const players = JSON.parse(localStorage.getItem('eh_players_local_v2')||'{}');
+  const players = JSON.parse(localStorage.getItem('eh_players_local_v3')||'{}');
   if(players[username]){
     const p = players[username];
     state.prey = p.prey || state.prey;
@@ -372,7 +736,7 @@ async function loadLeaderboardFromBackend(){
     }
   }
   // fallback local
-  const players = JSON.parse(localStorage.getItem('eh_players_local_v2')||'{}');
+  const players = JSON.parse(localStorage.getItem('eh_players_local_v3')||'{}');
   const arr = Object.values(players).sort((a,b)=>b.prey-a.prey).slice(0,20);
   arr.forEach(p=>{
     const li = document.createElement('li');
@@ -388,15 +752,12 @@ function ensureQuests(){
   }
 }
 
-/* Daily reset: reset quests progress and codex unlocked every 24 hours.
-   We store 'eh_daily_reset_ts_v1' in localStorage and reset if more than 24h passed.
-*/
+/* Daily reset */
 function checkDailyReset(){
-  const key = 'eh_daily_reset_ts_v1';
+  const key = 'eh_daily_reset_ts_v2';
   const last = parseInt(localStorage.getItem(key)||'0',10);
   const now = Date.now();
   if(!last || now - last >= 24*3600*1000){
-    // Reset quests progress and codex unlocked
     state.quests = (state.role === 'hunter') ? JSON.parse(JSON.stringify(HUNTER_QUESTS)) : JSON.parse(JSON.stringify(WOLF_QUESTS));
     state.codexUnlocked = [];
     localStorage.setItem(key, String(now));
@@ -405,14 +766,13 @@ function checkDailyReset(){
   }
 }
 
-/* Hunts per day reset */
 function resetDailyHuntsIfNeeded(){
   const now = Date.now();
   if(now - lastHuntReset >= 24*3600*1000){
     huntsToday = 0;
     lastHuntReset = now;
-    localStorage.setItem('eh_hunts_today', String(huntsToday));
-    localStorage.setItem('eh_hunt_reset_ts', String(lastHuntReset));
+    localStorage.setItem('eh_hunts_today_v4', String(huntsToday));
+    localStorage.setItem('eh_hunt_reset_ts_v4', String(lastHuntReset));
   }
 }
 
@@ -427,7 +787,7 @@ function updateUI(){
   renderQuests(); renderInventory(); renderShop(); renderCodexBox(); loadLeaderboardFromBackend();
 }
 
-/* Level up check */
+/* Level up */
 function checkLevelUp(){
   while(state.xp >= state.level * 100){
     state.xp -= state.level * 100;
@@ -443,21 +803,15 @@ async function doHunt(){
   if(!state.username){ alert('Save profile first'); return; }
   resetDailyHuntsIfNeeded();
   if(huntsToday >= DAILY_HUNT_LIMIT){ setMainLog("You've reached your daily hunt limit. Come back tomorrow."); return; }
-  // gains
   const base = Math.floor(Math.random()*12)+6;
   const isBlood = Math.floor(Date.now()/60000)%4===0;
   const gained = isBlood ? base*2 : base;
-  state.prey += gained;
-  state.xp += 12;
-  huntsToday++;
-  localStorage.setItem('eh_hunts_today', String(huntsToday));
+  state.prey += gained; state.xp += 12;
+  huntsToday++; localStorage.setItem('eh_hunts_today_v4', String(huntsToday));
   setMainLog(`You hunted and gained ${gained} $PREY.${isBlood ? ' (Blood Moon!)' : ''}`);
-  playSound(state.role==='wolf' ? 's_wolf' : 's_bow');
+  playSound(state.role === 'wolf' ? 's_wolf' : 's_bow');
   flashMain(gained>=20 ? 'green' : 'red');
-  incrementQuests('hunt');
-  checkLevelUp();
-  await saveToBackend();
-  updateUI();
+  incrementQuests('hunt'); checkLevelUp(); await saveToBackend(); updateUI();
 }
 
 async function doTrain(){
@@ -466,8 +820,7 @@ async function doTrain(){
   state.prey -= 20; state.strength += 1; state.xp += 8;
   setMainLog(`You trained. Strength now ${state.strength}`);
   playSound('s_train'); flashMain('green');
-  incrementQuests('train'); checkLevelUp();
-  await saveToBackend(); updateUI();
+  incrementQuests('train'); checkLevelUp(); await saveToBackend(); updateUI();
 }
 
 async function doPvp(){
@@ -540,7 +893,7 @@ function renderShop(){
     const left = document.createElement('div'); left.textContent = `${it.name} — ${it.cost} $PREY`;
     const right = document.createElement('div');
     const btn = document.createElement('button'); btn.textContent='Buy'; btn.className='btn';
-    btn.onclick = ()=> buyRelic(it.name,it.cost);
+    btn.onclick = ()=> buyRelic(it.name, it.cost);
     right.appendChild(btn);
     div.appendChild(left); div.appendChild(right);
     shopRows.appendChild(div);
@@ -559,7 +912,7 @@ function buyRelic(name,cost){
   playSound('s_win'); incrementQuests('relic'); saveLocalState(); saveToBackend(); renderInventory(); renderQuests(); loadLeaderboardFromBackend(); updateUI();
 }
 
-/* Codex unlock & modal */
+/* Codex */
 function unlockCodex(){
   const pool = state.role === 'hunter' ? HUNTER_CODEX : WOLF_CODEX;
   if(state.codexUnlocked.length < pool.length){
@@ -583,27 +936,36 @@ function renderCodexBox(){
   state.codexUnlocked.forEach((t,i)=>{ const p = document.createElement('div'); p.className='codex-entry'; p.textContent = `${i+1}. ${t}`; box.appendChild(p); });
 }
 
-/* Rewarded ad placeholder */
+/* Rewarded Monetag ad */
 let adTimer = null;
-function startAd(){
-  if(!state.username){ alert('Save profile first'); return; }
-  const modal = document.getElementById('adModal'); modal.classList.add('open');
-  const body = document.getElementById('adBody'); let sec=5; body.textContent = `Watching ad... ${sec}s`;
-  playSound('s_ad');
-  adTimer = setInterval(()=>{ sec--; if(sec<=0){ clearInterval(adTimer); adTimer=null; state.prey += 50; saveLocalState(); saveToBackend(); renderInventory(); loadLeaderboardFromBackend(); body.textContent='Ad finished: +50 $PREY'; setTimeout(()=>modal.classList.remove('open'),900); setMainLog('Ad: +50 $PREY'); } else body.textContent=`Watching ad... ${sec}s`; },1000);
+function showRewardedAd(){
+  try {
+    if(typeof Monetag === 'undefined'){ setMainLog('Ads not loaded yet.'); return; }
+    Monetag.showInterstitial({
+      zoneId: "9855091",
+      onClose: async () => {
+        state.prey += 50; saveLocalState(); await saveToBackend(); renderInventory(); loadLeaderboardFromBackend(); setMainLog('Ad finished: +50 $PREY'); playSound('s_ad');
+      },
+      onError: (err) => {
+        console.error('Monetag error', err); setMainLog('Ad failed to load. Try later.');
+      }
+    });
+  } catch(e){
+    console.error('Monetag SDK error', e); setMainLog('Ads not available.');
+  }
 }
 function cancelAd(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } document.getElementById('adModal').classList.remove('open'); }
 
 /* Daily claim */
 function claimDaily(){
-  const key = 'eh_daily_ts_v3';
+  const key = 'eh_daily_ts_v4';
   const last = parseInt(localStorage.getItem(key)||'0',10);
   const now = Date.now();
   if(now - last < 24*3600*1000){ alert('Daily already claimed'); return; }
   state.prey += 25; localStorage.setItem(key,String(now)); saveLocalState(); saveToBackend(); updateUI(); setMainLog('Daily +25 $PREY');
 }
 
-/* Save/Load profile & UI */
+/* Save / Load profile & UI */
 async function saveProfileBtnHandler(){
   const name = document.getElementById('usernameInput').value.trim();
   const roleSel = document.getElementById('roleSelect').value;
@@ -614,7 +976,7 @@ async function saveProfileBtnHandler(){
   if(roleChanged) state.codexUnlocked = [];
   saveLocalState();
   await saveToBackend();
-  // hide profile panel after save the first time
+  // hide profile panel after save
   document.getElementById('profilePanel').style.display = 'none';
   setMainLog('Profile saved.');
   renderAll();
@@ -624,14 +986,9 @@ async function loadProfileAndSync(){
   if(!name) return;
   state.username = name;
   const loaded = await loadFromBackend(name);
-  if(loaded){
-    document.getElementById('roleSelect').value = state.role;
-    saveLocalState();
-    renderAll();
-  } else {
-    // not found remotely — keep local
-    renderAll();
-  }
+  document.getElementById('roleSelect').value = state.role;
+  saveLocalState();
+  renderAll();
 }
 
 /* PvP modal helpers */
@@ -644,19 +1001,19 @@ function openCodexModal(){ document.getElementById('codexModal').classList.add('
 function closeCodexModal(){ document.getElementById('codexModal').classList.remove('open'); }
 function renderCodexModalContent(){ const content = document.getElementById('codexContent'); content.innerHTML=''; if(!state.codexUnlocked || state.codexUnlocked.length===0){ content.innerHTML='<div class="small">No lore unlocked yet.</div>'; return; } state.codexUnlocked.forEach((t,i)=>{ const p = document.createElement('div'); p.className='codex-entry'; p.textContent = `${i+1}. ${t}`; content.appendChild(p); }); }
 
-/* Mute toggle */
+/* Toggle mute */
 function toggleMute(){ muted = !muted; document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊'; }
 
 /* Render all */
 function renderAll(){ ensureQuests(); renderQuests(); renderInventory(); renderShop(); renderCodexBox(); updateUI(); }
 
-/* Event wiring */
+/* Events wiring */
 document.getElementById('saveProfileBtn').addEventListener('click', saveProfileBtnHandler);
-document.getElementById('resetBtn').addEventListener('click', ()=>{ if(confirm('Reset local progress & profile?')){ localStorage.removeItem(LOCAL_KEY); localStorage.removeItem('eh_players_local_v2'); location.reload(); }});
+document.getElementById('resetBtn').addEventListener('click', ()=>{ if(confirm('Reset local progress & profile?')){ localStorage.removeItem(LOCAL_KEY); localStorage.removeItem('eh_players_local_v3'); location.reload(); }});
 document.getElementById('huntBtn').addEventListener('click', ()=> doHunt());
 document.getElementById('trainBtn').addEventListener('click', ()=> doTrain());
 document.getElementById('pvpBtn').addEventListener('click', ()=> openPvpModal());
-document.getElementById('adBtn').addEventListener('click', ()=> startAd());
+document.getElementById('adBtn').addEventListener('click', ()=> showRewardedAd());
 document.getElementById('dailyBtn').addEventListener('click', ()=> claimDaily());
 document.getElementById('openCodexBtn').addEventListener('click', ()=> openCodexModal());
 document.getElementById('closeCodexBtn').addEventListener('click', ()=> closeCodexModal());
@@ -664,9 +1021,9 @@ document.getElementById('closeAdBtn').addEventListener('click', ()=> cancelAd())
 document.getElementById('closePvpBtn').addEventListener('click', ()=> closePvpModal());
 document.getElementById('muteBtn').addEventListener('click', ()=> toggleMute());
 
-/* On load initializer */
+// On load
 (function start(){
-  // if profile already set in state, hide profile panel
+  // if profile saved, hide panel
   if(state.username){
     document.getElementById('profilePanel').style.display = 'none';
     document.getElementById('usernameInput').value = state.username;
@@ -674,15 +1031,14 @@ document.getElementById('muteBtn').addEventListener('click', ()=> toggleMute());
   } else {
     document.getElementById('profilePanel').style.display = 'block';
   }
-  // Daily reset check
   checkDailyReset();
   resetDailyHuntsIfNeeded();
   renderAll();
   setMainLog('Ready. Save profile to register (backend if available).');
 })();
 
-/* Expose some functions globally (used by inline handlers if needed) */
-window.startAd = startAd;
+/* Expose some functions globally (optional) */
+window.showRewardedAd = showRewardedAd;
 window.buyRelic = buyRelic;
 window.openCodexModal = openCodexModal;
 window.closeCodexModal = closeCodexModal;

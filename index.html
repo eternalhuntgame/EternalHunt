@@ -113,6 +113,32 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
+  // --- Check if profile exists on load ---
+firebase.auth().onAuthStateChanged(async (user) => {
+  if (user) {
+    // Try to fetch player profile from Firestore
+    const doc = await db.collection("players").doc(user.uid).get();
+    if (doc.exists) {
+      player = doc.data();
+
+      // Hide profile panel, show game directly
+      document.getElementById("profilePanel").classList.add("hidden");
+      document.getElementById("gamePanel").classList.remove("hidden");
+
+      // Load UI data
+      loadQuests();
+      loadCodex();
+      updateStats();
+      loadLeaderboard();
+    } else {
+      // No profile saved yet → show profile setup
+      document.getElementById("profilePanel").classList.remove("hidden");
+    }
+  } else {
+    // Not signed in → anonymous login
+    await firebase.auth().signInAnonymously();
+  }
+});
 </script>
 <script>
   let player = {

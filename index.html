@@ -13,57 +13,26 @@
       margin: 0;
       padding: 0;
     }
-    h1 {
-      font-size: 2rem;
-      margin: 1rem 0;
-    }
-    .panel {
-      display: none;
-      padding: 1rem;
-      animation: fadeIn 0.5s ease-in-out;
-    }
-    .active {
-      display: block;
-    }
+    h1 { font-size: 2rem; margin: 1rem 0; }
+    .panel { display: none; padding: 1rem; animation: fadeIn 0.5s ease-in-out; }
+    .active { display: block; }
     nav {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background: #111;
-      display: flex;
-      justify-content: space-around;
-      padding: 0.5rem;
+      position: fixed; bottom: 0; width: 100%; background: #111;
+      display: flex; justify-content: space-around; padding: 0.5rem;
       border-top: 1px solid #444;
     }
     nav button {
-      flex: 1;
-      padding: 0.8rem;
-      background: #222;
-      border: none;
-      color: #eee;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background 0.3s;
+      flex: 1; padding: 0.8rem; background: #222; border: none;
+      color: #eee; font-size: 0.9rem; cursor: pointer; transition: background 0.3s;
     }
-    nav button:hover {
-      background: #333;
-    }
+    nav button:hover { background: #333; }
     .quest, .codex-entry, .shop-item, .player-stat {
-      background: #222;
-      margin: 0.5rem 0;
-      padding: 0.8rem;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+      background: #222; margin: 0.5rem 0; padding: 0.8rem;
+      border-radius: 8px; box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
       animation: pop 0.4s ease;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes pop {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
+    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+    @keyframes pop { from {transform:scale(0.9);opacity:0;} to {transform:scale(1);opacity:1;} }
   </style>
 </head>
 <body>
@@ -132,9 +101,9 @@
     <button onclick="showPanel('leaderboardPanel')">Leaderboard</button>
   </nav>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <!-- Firebase v8 (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <!-- Monetag -->
   <script src="https://a.monetag.com/9855091.js"></script>
 
@@ -149,16 +118,14 @@
       messagingSenderId: "87971567607",
       appId: "1:87971567607:web:2b4401b8e8672436ea80f2"
     };
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Player Data
-    let player = JSON.parse(localStorage.getItem("player")) || null;
-    let dailyLimit = 50;
-    let huntsDone = 0;
     let today = new Date().toDateString();
+    let player = JSON.parse(localStorage.getItem("player")) || null;
+    const dailyLimit = 50;
 
-    // Profile Setup
+    // Profile
     function saveProfile() {
       const username = document.getElementById("usernameInput").value;
       const role = document.getElementById("roleInput").value;
@@ -168,18 +135,14 @@
       localStorage.setItem("player", JSON.stringify(player));
       db.collection("players").doc(username).set(player);
       document.getElementById("profilePanel").style.display = "none";
-      showPanel('huntPanel');
-      loadQuests();
-      loadCodex();
-      loadLeaderboard();
+      showPanel("huntPanel");
+      loadQuests(); loadCodex(); loadLeaderboard();
     }
 
     if (player) {
       document.getElementById("profilePanel").style.display = "none";
-      showPanel('huntPanel');
-      loadQuests();
-      loadCodex();
-      loadLeaderboard();
+      showPanel("huntPanel");
+      loadQuests(); loadCodex(); loadLeaderboard();
     }
 
     // Panel Switch
@@ -192,61 +155,39 @@
     function doHunt() {
       if (player.date !== today) { player.hunts = 0; player.date = today; }
       if (player.hunts >= dailyLimit) return alert("Daily hunt limit reached!");
-      player.hunts++;
-      player.prey += 5;
+      player.hunts++; player.prey += 5;
       localStorage.setItem("player", JSON.stringify(player));
-      db.collection("players").doc(player.username).update(player);
-      document.getElementById("huntStatus").innerText = `Hunts remaining today: ${dailyLimit - player.hunts}`;
+      db.collection("players").doc(player.username).set(player);
+      document.getElementById("huntStatus").innerText = 
+        `Hunts remaining today: ${dailyLimit - player.hunts}`;
     }
 
     // Quests
-    const wolfQuests = [
-      "Howl under the Blood Moon", "Mark territory at the Black Forest",
-      "Hunt the Shadow Deer", "Guard the Pack's Den", "Test your claws on the Bone Tree",
-      "Chase away rival wolves", "Track the Lost Pup", "Defend against the Hunters",
-      "Stalk prey silently", "Train with the Alpha"
-    ];
-    const hunterQuests = [
-      "Sharpen your silver arrows", "Patrol the Dark Woods",
-      "Set traps for wolves", "Collect herbs for healing",
-      "Scout the mountain pass", "Hunt the Shadow Deer",
-      "Guard the village gates", "Chase wolves from farmland",
-      "Map the cursed ruins", "Train with the Master Hunter"
-    ];
+    const wolfQuests = ["Howl under the Blood Moon","Mark territory at the Black Forest",
+      "Hunt the Shadow Deer","Guard the Pack's Den","Test claws on the Bone Tree",
+      "Chase away rivals","Track the Lost Pup","Defend against Hunters",
+      "Stalk prey silently","Train with the Alpha"];
+    const hunterQuests = ["Sharpen silver arrows","Patrol the Dark Woods",
+      "Set traps for wolves","Collect herbs","Scout the mountain pass",
+      "Hunt the Shadow Deer","Guard the village","Chase wolves",
+      "Map the ruins","Train with the Master Hunter"];
     function loadQuests() {
-      let list = document.getElementById("questsList");
-      list.innerHTML = "";
+      let list = document.getElementById("questsList"); list.innerHTML = "";
       const quests = (player.role === "Wolf" ? wolfQuests : hunterQuests)
         .sort(() => 0.5 - Math.random()).slice(0, 10);
-      quests.forEach(q => {
-        let div = document.createElement("div");
-        div.className = "quest";
-        div.innerText = q;
-        list.appendChild(div);
-      });
+      quests.forEach(q => { let div=document.createElement("div"); div.className="quest"; div.innerText=q; list.appendChild(div); });
     }
 
     // Codex
-    const codexEntries = [
-      "The Blood Moon marks the rise of power.",
-      "Relics whisper secrets of the first Hunt.",
-      "The Eternal Forest is alive with shadows.",
-      "Hunters carve their legacy into silver.",
-      "Wolves carry the spirit of the ancients.",
-      "When the Black Moon rises, all tremble.",
-      "The Hunt is not a game, it is survival.",
-      "Relics are keys to forgotten worlds.",
-      "The Alpha’s howl echoes through eternity.",
-      "Hunters and Wolves are bound by fate."
-    ];
+    const codexEntries = ["The Blood Moon marks the rise of power.","Relics whisper secrets.",
+      "The Eternal Forest is alive with shadows.","Hunters carve silver legacy.",
+      "Wolves carry spirit of the ancients.","When Black Moon rises, all tremble.",
+      "The Hunt is survival.","Relics are keys to forgotten worlds.",
+      "Alpha’s howl echoes eternity.","Hunters and Wolves bound by fate."];
     function loadCodex() {
-      let list = document.getElementById("codexList");
-      list.innerHTML = "";
-      codexEntries.sort(() => 0.5 - Math.random()).slice(0, 5).forEach(e => {
-        let div = document.createElement("div");
-        div.className = "codex-entry";
-        div.innerText = e;
-        list.appendChild(div);
+      let list=document.getElementById("codexList"); list.innerHTML="";
+      codexEntries.sort(()=>0.5-Math.random()).slice(0,5).forEach(e=>{
+        let div=document.createElement("div"); div.className="codex-entry"; div.innerText=e; list.appendChild(div);
       });
     }
 
@@ -254,38 +195,31 @@
     function train() {
       player.prey += 2;
       localStorage.setItem("player", JSON.stringify(player));
-      db.collection("players").doc(player.username).update(player);
+      db.collection("players").doc(player.username).set(player);
       document.getElementById("trainingResult").innerText = "You trained and earned 2 $PREY!";
     }
 
     // PvP
     async function findOpponent() {
       const snapshot = await db.collection("players").get();
-      const players = snapshot.docs.map(d => d.data()).filter(p => p.username !== player.username);
-      if (players.length === 0) {
-        document.getElementById("pvpResult").innerText = "No opponents available.";
-        return;
-      }
-      const opponent = players[Math.floor(Math.random() * players.length)];
+      const players = snapshot.docs.map(d=>d.data()).filter(p=>p.username!==player.username);
+      if (players.length === 0) { document.getElementById("pvpResult").innerText="No opponents."; return; }
+      const opponent = players[Math.floor(Math.random()*players.length)];
       const win = Math.random() > 0.5;
       if (win) { player.prey += 10; }
       localStorage.setItem("player", JSON.stringify(player));
-      db.collection("players").doc(player.username).update(player);
+      db.collection("players").doc(player.username).set(player);
       document.getElementById("pvpResult").innerText =
-        `You fought ${opponent.username} and ${win ? "won +10 $PREY" : "lost"}.`;
+        `You fought ${opponent.username} and ${win?"won +10 $PREY":"lost"}.`;
     }
 
     // Leaderboard
     async function loadLeaderboard() {
-      const snapshot = await db.collection("players").orderBy("prey", "desc").limit(10).get();
-      let board = document.getElementById("leaderboard");
-      board.innerHTML = "";
-      snapshot.docs.forEach(doc => {
-        let p = doc.data();
-        let div = document.createElement("div");
-        div.className = "player-stat";
-        div.innerText = `${p.username} – ${p.prey} $PREY`;
-        board.appendChild(div);
+      const snapshot = await db.collection("players").orderBy("prey","desc").limit(10).get();
+      let board=document.getElementById("leaderboard"); board.innerHTML="";
+      snapshot.docs.forEach(doc=>{
+        let p=doc.data(); let div=document.createElement("div");
+        div.className="player-stat"; div.innerText=`${p.username} – ${p.prey} $PREY`; board.appendChild(div);
       });
     }
   </script>

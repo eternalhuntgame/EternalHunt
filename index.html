@@ -1,278 +1,619 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eternal Hunt</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script type="module">
-        // Firebase imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-        import { getDatabase, ref, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-
-        // Your Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyBz11XDhnqNwMyNUjqFpoC8lppEgCP-mew",
-            authDomain: "eternal-hunt-game-e48fb.firebaseapp.com",
-            projectId: "eternal-hunt-game-e48fb",
-            storageBucket: "eternal-hunt-game-e48fb.firebasestorage.app",
-            messagingSenderId: "87971567607",
-            appId: "1:87971567607:web:2b4401b8e8672436ea80f2"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-
-        // Telegram Web App
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-
-        let userId, userData = { coins: 0, xp: 0, role: null, relics: [], strength: 1 };
-        let pvpListener, battleId;
-
-        // Get Telegram user
-        const tgUser = tg.initDataUnsafe.user;
-        if (tgUser) {
-            userId = tgUser.id.toString();
-            document.getElementById('welcome').innerText = `Welcome, ${tgUser.first_name}!`;
-            loadUserData();
-        } else {
-            tg.showAlert('Error: No Telegram user data.');
-        }
-
-        // Authenticate anonymously
-        signInAnonymously(auth).catch(error => tg.showAlert('Auth error: ' + error.message));
-
-        function loadUserData() {
-            const userRef = ref(db, `users/${userId}`);
-            onValue(userRef, (snapshot) => {
-                userData = snapshot.val() || userData;
-                if (!userData.role) {
-                    document.getElementById('role-selection').style.display = 'block';
-                } else {
-                    showMainMenu();
-                }
-                updateStatus();
-            });
-        }
-
-        function selectRole(role) {
-            userData.role = role;
-            userData.name = tgUser.first_name; // Store name for leaderboard
-            saveUserData();
-            showMainMenu();
-        }
-
-        function showMainMenu() {
-            document.getElementById('role-selection').style.display = 'none';
-            document.getElementById('main-menu').style.display = 'block';
-        }
-
-        function updateStatus() {
-            document.getElementById('status').innerText = `Coins: ${userData.coins} $PREY | XP: ${userData.xp} | Strength: ${userData.strength}`;
-        }
-
-        function saveUserData() {
-            set(ref(db, `users/${userId}`), userData);
-            updateLeaderboard();
-        }
-
-        function hunt() {
-            const baseCoins = Math.floor(Math.random() * 50) + 10;
-            const baseXP = Math.floor(Math.random() * 30) + 5;
-            const multiplier = userData.relics.includes('Sword') ? 1.2 : 1;
-            userData.coins += Math.floor(baseCoins * multiplier);
-            userData.xp += baseXP * userData.strength;
-            saveUserData();
-            tg.showAlert(`Hunt successful! +${baseCoins} $PREY, +${baseXP} XP.`);
-        }
-
-        function train() {
-            if (userData.coins < 50) return tg.showAlert('Not enough coins!');
-            userData.coins -= 50;
-            userData.strength += 1;
-            saveUserData();
-            tg.showAlert('Training complete! Strength +1.');
-        }
-
-        function showShop() {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('shop').style.display = 'block';
-        }
-
-        function buyRelic(relic, cost) {
-            if (userData.coins < cost) return tg.showAlert('Not enough coins!');
-            if (userData.relics.includes(relic)) return tg.showAlert('Already owned!');
-            userData.coins -= cost;
-            userData.relics.push(relic);
-            if (relic === 'Amulet') userData.strength += 1;
-            saveUserData();
-            tg.showAlert(`${relic} purchased!`);
-        }
-
-        function backToMenu() {
-            document.getElementById('shop').style.display = 'none';
-            document.getElementById('pvp').style.display = 'none';
-            document.getElementById('leaderboard').style.display = 'none';
-            showMainMenu();
-        }
-
-        async function joinPvP() {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('pvp').style.display = 'block';
-            const queueRef = ref(db, 'pvp_queue');
-            onValue(queueRef, async (snapshot) => {
-                let queue = snapshot.val() || [];
-                if (queue.length > 0 && queue[0] !== userId) {
-                    const opponentId = queue.shift();
-                    battleId = `${userId}_${opponentId}`;
-                    await startBattle(opponentId);
-                    await set(queueRef, queue);
-                } else if (!queue.includes(userId)) {
-                    queue.push(userId);
-                    await set(queueRef, queue);
-                    document.getElementById('pvp-status').innerText = 'Waiting for opponent...';
-                    pvpListener = queueRef;
-                }
-            }, { onlyOnce: true });
-        }
-
-        function startBattle(opponentId) {
-            document.getElementById('pvp-status').innerText = `Battling ${opponentId}! Your turn.`;
-            document.getElementById('attack-btn').style.display = 'inline';
-            document.getElementById('defend-btn').style.display = 'inline';
-            const battleRef = ref(db, `battles/${battleId}`);
-            set(battleRef, { turn: userId, player1: userId, player2: opponentId, hp1: 100, hp2: 100 });
-            onValue(battleRef, (snap) => {
-                const battle = snap.val();
-                if (!battle) return;
-                if (battle.turn !== userId) {
-                    document.getElementById('pvp-status').innerText = `Opponent ${battle.player2}'s turn...`;
-                    document.getElementById('attack-btn').style.display = 'none';
-                    document.getElementById('defend-btn').style.display = 'none';
-                }
-                if (battle.hp1 <= 0 || battle.hp2 <= 0) {
-                    endBattle(battle);
-                }
-            });
-        }
-
-        async function pvpAction(action) {
-            const battleRef = ref(db, `battles/${battleId}`);
-            onValue(battleRef, async (snap) => {
-                let battle = snap.val();
-                if (!battle || battle.turn !== userId) return;
-                const isPlayer1 = battle.player1 === userId;
-                const opponentHpKey = isPlayer1 ? 'hp2' : 'hp1';
-                const damage = action === 'attack' ? Math.floor(Math.random() * 20) + 10 * userData.strength : 0;
-                battle[opponentHpKey] -= damage;
-                battle.turn = isPlayer1 ? battle.player2 : battle.player1;
-                await set(battleRef, battle);
-                tg.showAlert(`${action.toUpperCase()}! Dealt ${damage} damage.`);
-            }, { onlyOnce: true });
-        }
-
-        function endBattle(battle) {
-            const won = (battle.player1 === userId && battle.hp2 <= 0) || (battle.player2 === userId && battle.hp1 <= 0);
-            if (won) {
-                userData.coins += 100;
-                userData.xp += 50;
-                saveUserData();
-                tg.showAlert('Victory! +100 $PREY, +50 XP.');
-            } else {
-                tg.showAlert('Defeat...');
-            }
-            remove(ref(db, `battles/${battleId}`));
-            battleId = null;
-            backToMenu();
-        }
-
-        async function leavePvP() {
-            if (pvpListener) {
-                pvpListener.off();
-                let queue = (await onValue(ref(db, 'pvp_queue'), { onlyOnce: true })).val() || [];
-                queue = queue.filter(id => id !== userId);
-                await set(ref(db, 'pvp_queue'), queue);
-            }
-            if (battleId) await remove(ref(db, `battles/${battleId}`));
-            backToMenu();
-        }
-
-        function showLeaderboard() {
-            const lbDiv = document.getElementById('leaderboard');
-            lbDiv.style.display = 'block';
-            lbDiv.innerHTML = '<h2>Global Leaderboard</h2>';
-            onValue(ref(db, 'users'), (snap) => {
-                const users = [];
-                snap.forEach(child => {
-                    const u = child.val();
-                    if (u.name && u.xp) users.push({ name: u.name, xp: u.xp });
-                });
-                users.sort((a, b) => b.xp - a.xp).slice(0, 10).forEach(u => {
-                    lbDiv.innerHTML += `<p>${u.name}: ${u.xp} XP</p>`;
-                });
-            }, { onlyOnce: true });
-        }
-
-        function updateLeaderboard() {
-            // Handled in saveUserData via user data updates
-        }
-
-        // Expose functions to global scope for button onclick
-        window.selectRole = selectRole;
-        window.hunt = hunt;
-        window.train = train;
-        window.showShop = showShop;
-        window.buyRelic = buyRelic;
-        window.backToMenu = backToMenu;
-        window.joinPvP = joinPvP;
-        window.pvpAction = pvpAction;
-        window.leavePvP = leavePvP;
-        window.showLeaderboard = showLeaderboard;
-    </script>
-    <style>
-        body { margin: 0; font-family: Arial; text-align: center; background: #111; color: #fff; }
-        #game { padding: 20px; }
-        button { margin: 10px; padding: 10px; background: #333; color: #fff; border: none; cursor: pointer; }
-        button:hover { background: #555; }
-        #leaderboard { margin-top: 20px; }
-        .hidden { display: none; }
-    </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Eternal Hunt — Complete Game</title>
+<style>
+  :root{
+    --bg:#07070a; --card:#0f1116; --muted:#98a0a6; --text:#eef0f6;
+    --accent:#ff3b5c; --accent2:#ff8a9b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#0b0b12);color:var(--text);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:14px auto;padding:12px}
+  .header{display:flex;gap:12px;align-items:center}
+  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#06060a}
+  h1{margin:0;font-size:20px}
+  .muted{color:var(--muted);font-size:13px}
+  .layout{display:grid;grid-template-columns:280px 1fr;gap:12px;margin-top:12px}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.005));border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.03)}
+  .profile{display:flex;gap:10px;align-items:center}
+  .avatar{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#06060a}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .stat{background:rgba(255,255,255,0.02);padding:6px 8px;border-radius:8px;font-weight:700}
+  .nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .nav button{flex:1;padding:10px;border-radius:10px;border:0;background:#111;color:var(--text);cursor:pointer}
+  .nav button.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#06060a}
+  .panel{margin-top:12px}
+  .panel .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{padding:10px 12px;border-radius:10px;border:0;background:#111;color:var(--text);cursor:pointer;font-weight:700}
+  .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#06060a}
+  .log{margin-top:12px;padding:12px;border-radius:10px;background:#06060a;min-height:72px;border:1px solid rgba(255,255,255,.02);white-space:pre-wrap}
+  .small{font-size:13px;color:var(--muted)}
+  .list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .list-item{padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center}
+  .codex-entry{cursor:pointer;transition:transform .18s,opacity .18s}
+  .codex-entry.locked{opacity:.5;cursor:default}
+  .codex-entry.unlocked{transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .flash{animation:flash 0.6s}
+  @keyframes flash{0%{background:rgba(255,255,255,0.02)}100%{background:transparent}}
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:300}
+  .modal.open{display:flex}
+  @media(max-width:900px){ .layout{grid-template-columns:1fr; } .nav{justify-content:space-between} }
+</style>
 </head>
 <body>
-    <div id="game">
-        <h1>Eternal Hunt</h1>
-        <p id="welcome"></p>
-        <div id="role-selection">
-            <p>Choose your role:</p>
-            <button onclick="selectRole('HUNTER')">Hunter</button>
-            <button onclick="selectRole('WOLF')">Wolf</button>
-        </div>
-        <div id="main-menu" class="hidden">
-            <p id="status">Coins: 0 | XP: 0 | Strength: 1</p>
-            <button onclick="hunt()">Hunt</button>
-            <button onclick="train()">Train (50 $PREY)</button>
-            <button onclick="showShop()">Shop</button>
-            <button onclick="joinPvP()">PvP</button>
-            <button onclick="showLeaderboard()">Leaderboard</button>
-        </div>
-        <div id="shop" class="hidden">
-            <h2>Shop</h2>
-            <button onclick="buyRelic('Sword', 100)">Sword (100 $PREY - +20% hunt rewards)</button>
-            <button onclick="buyRelic('Amulet', 150)">Amulet (150 $PREY - +1 strength)</button>
-            <button onclick="backToMenu()">Back</button>
-        </div>
-        <div id="pvp" class="hidden">
-            <h2>PvP Battle</h2>
-            <p id="pvp-status">Waiting for opponent...</p>
-            <button id="attack-btn" class="hidden" onclick="pvpAction('attack')">Attack</button>
-            <button id="defend-btn" class="hidden" onclick="pvpAction('defend')">Defend</button>
-            <button onclick="leavePvP()">Leave</button>
-        </div>
-        <div id="leaderboard" class="hidden"></div>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">EH</div>
+    <div>
+      <h1>Eternal Hunt</h1>
+      <div class="muted">Play — Hunt • Train • PvP • Quests • Codex</div>
     </div>
+  </div>
+
+  <div class="layout">
+    <!-- Left column -->
+    <div>
+      <div class="card profile" id="profileCard">
+        <div class="avatar" id="avatar">EH</div>
+        <div>
+          <div id="displayName" style="font-weight:800">—</div>
+          <div class="small" id="displayRole">—</div>
+          <div class="stats" style="margin-top:8px">
+            <div class="stat">L<span id="displayLevel">1</span></div>
+            <div class="stat">STR <span id="displayStrength">1</span></div>
+            <div class="stat">$PREY <span id="displayPrey">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">Profile (first-time only)</div>
+        <div id="profileSetupArea" style="margin-top:8px">
+          <input id="usernameInput" placeholder="Discord username e.g. Wolf#1234" style="width:100%;padding:8px;border-radius:8px;border:0;background:#0b0b12;color:var(--text)"/>
+          <div style="height:8px"></div>
+          <select id="roleSelect" style="width:100%;padding:8px;border-radius:8px;border:0;background:#0b0b12;color:var(--text)">
+            <option value="wolf">Wolf 🐺</option>
+            <option value="hunter">Hunter 🏹</option>
+          </select>
+          <div style="height:8px"></div>
+          <div style="display:flex;gap:8px">
+            <button id="saveProfileBtn" class="primary btn">Save Profile</button>
+            <button id="clearProfileBtn" class="btn">Reset</button>
+          </div>
+          <div style="margin-top:8px" id="backendStatus" class="small">Initializing backend...</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">Menu</div>
+        <div class="nav" id="navBar" style="margin-top:8px">
+          <button class="active" data-target="tab-play">Play</button>
+          <button data-target="tab-train">Train</button>
+          <button data-target="tab-pvp">PvP</button>
+          <button data-target="tab-quests">Quests</button>
+          <button data-target="tab-codex">Codex</button>
+          <button data-target="tab-shop">Shop</button>
+          <button data-target="tab-leaderboard">Leaderboard</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div>
+      <div id="tab-play" class="card panel active">
+        <h3>Hunt Grounds</h3>
+        <div class="small">Daily limit: <strong id="dailyLimitText">50</strong></div>
+        <div style="margin-top:12px" class="controls">
+          <button id="huntBtn" class="primary btn">🦌 Hunt</button>
+          <button id="adBtn" class="btn">🎥 Watch Ad (+50 $PREY)</button>
+          <button id="muteBtn" class="btn">🔊</button>
+        </div>
+        <div id="mainLog" class="log" style="margin-top:12px">Welcome — save profile to register on backend.</div>
+      </div>
+
+      <div id="tab-train" class="card panel">
+        <h3>Training Grounds</h3>
+        <div style="margin-top:8px">
+          <button id="trainBtn" class="btn">💪 Train (20 $PREY)</button>
+          <div id="trainResult" class="small" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <div id="tab-pvp" class="card panel">
+        <h3>PvP Arena</h3>
+        <div style="margin-top:8px">
+          <button id="pvpBtn" class="btn">⚔️ Find Opponent</button>
+          <div id="pvpResult" class="small" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <div id="tab-quests" class="card panel">
+        <h3>Daily Quests</h3>
+        <div id="questsList" class="list"></div>
+      </div>
+
+      <div id="tab-codex" class="card panel">
+        <h3>Codex</h3>
+        <div id="codexBox" class="small"></div>
+        <div style="margin-top:8px"><button id="openCodexBtn" class="btn">Open Full Codex</button></div>
+      </div>
+
+      <div id="tab-shop" class="card panel">
+        <h3>Shop & Inventory</h3>
+        <strong>Inventory</strong>
+        <div id="inventoryList" class="small" style="margin-top:8px">Empty</div>
+        <div style="margin-top:12px"><strong>Relic Shop</strong></div>
+        <div id="shopRows"></div>
+        <div id="shopMsg" class="small" style="margin-top:8px"></div>
+      </div>
+
+      <div id="tab-leaderboard" class="card panel">
+        <h3>Leaderboard</h3>
+        <ol id="leaderboardList" class="small"></ol>
+        <div class="small" style="margin-top:8px">Tip: open on another device and save profile to simulate players.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Codex Modal -->
+<div id="codexModal" class="modal"><div class="card" style="width:92%;max-width:720px"><div style="display:flex;justify-content:space-between;align-items:center"><strong>Codex</strong><button id="closeCodexBtn" class="btn">Close</button></div><div id="codexContent" style="margin-top:12px"></div></div></div>
+
+<!-- Audio -->
+<audio id="s_hunt" src="https://actions.google.com/sounds/v1/animals/wolf_howl.ogg"></audio>
+<audio id="s_train" src="https://actions.google.com/sounds/v1/impacts/metal_thud.ogg"></audio>
+<audio id="s_win" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="s_lose" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
+<audio id="s_ad" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
+<!-- Firebase v8 compat -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<!-- Monetag ad script (zone: 9855091) -->
+<script src="https://alwingulla.com/88/tag.min.js" data-zone="9855091" async></script>
+
+<script>
+/* ========= CONFIG ========= */
+const firebaseConfig = {
+  apiKey: "AIzaSyBz11XDhnqNwMyNUjqFpoC8lppEgCP-mew",
+  authDomain: "eternal-hunt-game-e48fb.firebaseapp.com",
+  projectId: "eternal-hunt-game-e48fb",
+  storageBucket: "eternal-hunt-game-e48fb.firebasestorage.app",
+  messagingSenderId: "87971567607",
+  appId: "1:87971567607:web:2b4401b8e8672436ea80f2"
+};
+
+const LOCAL_KEY = 'eh_player_vfinal';
+const LOCAL_PLAYERS_KEY = 'eh_players_map_vfinal';
+const DAILY_LIMIT = 50;
+const QUEST_DAILY_COUNT = 10;
+const CODEX_DAILY_COUNT = 5;
+
+/* ========= STATE ========= */
+let firebaseAvailable = false;
+let db = null;
+let player = null; // { username, role, prey, strength, level, xp, inventory:[], lastDay }
+let state = {
+  quests: [],
+  codex: [],
+  codexUnlocked: 0,
+  huntsToday: 0
+};
+let muted = false;
+
+/* ========= POOLS ========= */
+const QUEST_POOLS = {
+  wolf: [
+    "Hunt 5 prey", "Train twice", "Win 1 PvP", "Unlock 2 Codex entries", "Collect 120 $PREY",
+    "Buy an item from shop", "Hunt during Blood Moon", "Own 1 relic", "Win 2 PvP battles", "Hunt 15 times"
+  ],
+  hunter: [
+    "Hunt 5 beasts", "Train twice", "Win 1 PvP", "Unlock 2 Codex entries", "Collect 140 $PREY",
+    "Buy an item from shop", "Hunt during Blood Moon", "Own 1 relic", "Win 2 PvP battles", "Scout 5 times"
+  ]
+};
+const CODEX_POOLS = {
+  wolf: [
+    "The First Howl — when the Eternal Pack was born.",
+    "Moonlit Hunt — wolves gain strength under the Blood Moon.",
+    "The Alpha’s Oath — loyalty to the Pack above all.",
+    "Relic of Fangs — ancient weapon of the Wolves.",
+    "The Eternal Hunt — a vow to never rest until prey is found.",
+    "Shadow Stalkers — wolves that blend with the night.",
+    "Wolf Totems — symbols of unity and ferocity.",
+    "The Silent Howl — a call only wolves can hear.",
+    "Lunar Blessing — strength renewed under the full moon.",
+    "Bloodfang Legacy — the story of the first Alpha."
+  ],
+  hunter: [
+    "The First Hunt — when mankind challenged the Wolves.",
+    "Silver Arrows — forged to pierce the toughest hide.",
+    "Hunter’s Creed — the oath of the Eternal Watch.",
+    "Relic of Spears — sacred weapon of the Hunters.",
+    "The Eternal Watch — guarding the wild from beasts.",
+    "Shadow Trackers — hunters who walk unseen.",
+    "Hunter Totems — charms of courage and focus.",
+    "The Silent Step — the art of moving unheard.",
+    "Lunar Discipline — training by moonlight.",
+    "Bloodmoon Hunt — tales of victory under red skies."
+  ]
+};
+
+/* ========= INIT FIREBASE ========= */
+function initFirebase(){
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    firebaseAvailable = true;
+    document.getElementById('backendStatus').textContent = 'Backend: Firestore ready';
+  } catch(e){
+    console.warn('Firebase init failed', e);
+    firebaseAvailable = false;
+    document.getElementById('backendStatus').textContent = 'Backend: Firestore unavailable — using local';
+  }
+}
+
+/* ========= UTIL ========= */
+function saveLocal(){
+  localStorage.setItem(LOCAL_KEY, JSON.stringify({ player, state }));
+}
+function loadLocal(){
+  const raw = localStorage.getItem(LOCAL_KEY);
+  if(!raw) return false;
+  try{
+    const parsed = JSON.parse(raw);
+    player = parsed.player;
+    state = parsed.state;
+    player.inventory = player.inventory || [];
+    state.quests = state.quests || [];
+    state.codex = state.codex || [];
+    state.codexUnlocked = state.codexUnlocked || 0;
+    state.huntsToday = state.huntsToday || 0;
+    return true;
+  }catch(e){ console.warn('local load fail', e); return false; }
+}
+function todayKey(){ return new Date().toDateString(); }
+function playSound(id){ if(muted) return; try{ const a=document.getElementById(id); if(a){ a.currentTime=0; a.play().catch(()=>{}); } }catch(e){} }
+function setMainLog(txt){ document.getElementById('mainLog').textContent = txt; }
+
+/* ========= NAV HANDLING ========= */
+document.querySelectorAll('#navBar button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#navBar button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.getAttribute('data-target');
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById(target).classList.add('active');
+    if(target==='tab-quests') renderQuests();
+    if(target==='tab-codex') renderCodexBox();
+    if(target==='tab-shop') renderShop();
+    if(target==='tab-leaderboard') loadLeaderboard();
+  });
+});
+
+/* ========= PROFILE (one-time) ========= */
+document.getElementById('saveProfileBtn').addEventListener('click', async ()=>{
+  const username = document.getElementById('usernameInput').value.trim();
+  const role = document.getElementById('roleSelect').value;
+  if(!username){ alert('Enter username'); return; }
+  player = { username, role, prey:0, strength:1, level:1, xp:0, inventory:[], lastDay:null };
+  state = { quests:[], codex:[], codexUnlocked:0, huntsToday:0 };
+  saveLocal();
+  if(firebaseAvailable){
+    try { await db.collection('players').doc(username).set({ username, role, prey:0, strength:1, level:1, xp:0 }); document.getElementById('backendStatus').textContent='Saved to Firestore'; }
+    catch(e){ console.warn('save fail', e); document.getElementById('backendStatus').textContent='Save to Firestore failed'; }
+  } else {
+    const map = JSON.parse(localStorage.getItem(LOCAL_PLAYERS_KEY)||'{}');
+    map[username] = { username, role, prey:0, strength:1, level:1, updated:Date.now() };
+    localStorage.setItem(LOCAL_PLAYERS_KEY, JSON.stringify(map));
+  }
+  initAfterProfile();
+});
+
+document.getElementById('clearProfileBtn').addEventListener('click', ()=>{ if(confirm('Reset local progress?')){ localStorage.removeItem(LOCAL_KEY); location.reload(); } });
+
+/* ========= INIT ========= */
+function init(){
+  initFirebase();
+  const ok = loadLocal();
+  if(!ok || !player){
+    // show profile UI (already present)
+    setMainLog('Please set up your profile (first time only).');
+    return;
+  }
+  initAfterProfile();
+}
+function initAfterProfile(){
+  // update left profile UI
+  document.getElementById('displayName').textContent = player.username;
+  document.getElementById('displayRole').textContent = player.role === 'wolf' ? 'Wolf 🐺' : 'Hunter 🏹';
+  document.getElementById('displayLevel').textContent = player.level;
+  document.getElementById('displayStrength').textContent = player.strength;
+  document.getElementById('displayPrey').textContent = player.prey;
+  document.getElementById('dailyLimitText').textContent = DAILY_LIMIT;
+  ensureDaily();
+  renderAll();
+  setMainLog('Ready — play safe and have fun.');
+}
+
+/* ========= DAILY RESET & SELECTION ========= */
+function ensureDaily(){
+  const key = todayKey();
+  if(!player.lastDay || player.lastDay !== key){
+    // new day -> pick quests & codex
+    player.lastDay = key;
+    state.huntsToday = 0;
+    // pick quests
+    const pool = QUEST_POOLS[player.role] || [];
+    state.quests = [];
+    const usedQ = new Set();
+    while(state.quests.length < QUEST_DAILY_COUNT){
+      const pick = pool[Math.floor(Math.random()*pool.length)];
+      if(!usedQ.has(pick)){ usedQ.add(pick); state.quests.push({ text: pick, progress:0, goal: guessGoalFromText(pick), done:false, rewardPrey:25, rewardXp:20 }); }
+    }
+    // pick codex
+    const poolC = CODEX_POOLS[player.role] || [];
+    state.codex = [];
+    const usedC = new Set();
+    while(state.codex.length < CODEX_DAILY_COUNT){
+      const pick = poolC[Math.floor(Math.random()*poolC.length)];
+      if(!usedC.has(pick)){ usedC.add(pick); state.codex.push(pick); }
+    }
+    state.codexUnlocked = 0;
+    saveLocal();
+    if(firebaseAvailable) db.collection('players').doc(player.username).set({ lastDay: player.lastDay }, { merge:true }).catch(()=>{});
+  }
+}
+function guessGoalFromText(txt){
+  const m = txt.match(/(\d+)/);
+  if(m) return parseInt(m[1],10);
+  if(txt.toLowerCase().includes('twice')) return 2;
+  return 1;
+}
+
+/* ========= RENDERERS ========= */
+function renderAll(){
+  if(!player) return;
+  document.getElementById('displayName').textContent = player.username;
+  document.getElementById('displayRole').textContent = player.role==='wolf' ? 'Wolf 🐺' : 'Hunter 🏹';
+  document.getElementById('displayLevel').textContent = player.level;
+  document.getElementById('displayStrength').textContent = player.strength;
+  document.getElementById('displayPrey').textContent = player.prey;
+  renderQuests();
+  renderCodexBox();
+  renderInventory();
+  renderShop();
+  loadLeaderboard(); // refresh leaderboard
+}
+function renderQuests(){
+  const el = document.getElementById('questsList'); el.innerHTML = '';
+  if(!state.quests || !state.quests.length){ el.innerHTML = '<div class="small">No quests today</div>'; return; }
+  state.quests.forEach((q,i)=>{
+    const item = document.createElement('div'); item.className='list-item';
+    const left = document.createElement('div'); left.innerHTML = `<div style="font-weight:700">${q.text}</div><div class="small">Progress: ${q.progress||0}/${q.goal}</div>`;
+    const right = document.createElement('div');
+    if(q.done){ right.innerHTML = '<div class="small">Completed</div>'; item.classList.add('flash'); }
+    else {
+      const btn = document.createElement('button'); btn.className='btn'; btn.textContent='Mark'; btn.onclick = ()=> completeQuest(i);
+      right.appendChild(btn);
+    }
+    item.appendChild(left); item.appendChild(right); el.appendChild(item);
+  });
+}
+function renderCodexBox(){
+  const box = document.getElementById('codexBox'); box.innerHTML = '';
+  if(!state.codex || !state.codex.length){ box.innerHTML = '<div class="small">No codex entries</div>'; return; }
+  state.codex.forEach((c,i)=>{
+    const p = document.createElement('div'); p.className='codex-entry small';
+    if(i < state.codexUnlocked){ p.textContent = `${i+1}. ${c} (Unlocked)`; p.classList.add('unlocked'); }
+    else if(i === state.codexUnlocked){
+      p.textContent = `${i+1}. ${c} — Click to unlock (+15 $PREY +10 XP)`; p.onclick = ()=> unlockCodexEntry();
+    } else { p.textContent = `${i+1}. Locked`; p.classList.add('locked'); }
+    box.appendChild(p);
+  });
+}
+function renderInventory(){ const el = document.getElementById('inventoryList'); el.innerHTML = (player.inventory && player.inventory.length) ? player.inventory.map(x=>`• ${x}`).join('<br>') : '<div class="small">Empty</div>'; }
+function renderShop(){ const shopRows = document.getElementById('shopRows'); shopRows.innerHTML = ''; const items = [ {name:'Alpha Fang',cost:160,role:'wolf'}, {name:"Hunter's Bow",cost:160,role:'hunter'}, {name:'Moon Totem',cost:200,role:'any'}, {name:'Cloak of Shadows',cost:200,role:'any'} ]; items.forEach(it=>{ const row=document.createElement('div'); row.className='list-item'; row.innerHTML = `<div><strong>${it.name}</strong><div class="small">${it.role==='any'?'All roles':it.role}</div></div>`; const btn=document.createElement('button'); btn.className='btn'; btn.textContent=`Buy ${it.cost}`; btn.onclick = ()=> buyItem(it.name,it.cost); row.appendChild(btn); shopRows.appendChild(row); }); }
+
+/* ========= ACTIONS ========= */
+function isBloodMoon(){ return Math.floor(Date.now()/60000)%4 === 0; }
+
+document.getElementById('huntBtn').addEventListener('click', async ()=>{
+  if(!player){ alert('Save profile first'); return; }
+  if(state.huntsToday >= DAILY_LIMIT){ setMainLog('Daily hunt limit reached'); return; }
+  let base = Math.floor(Math.random()*12)+6;
+  const gained = isBloodMoon() ? base * 2 : base;
+  player.prey = (player.prey||0) + gained;
+  player.xp = (player.xp||0) + 12;
+  state.huntsToday = (state.huntsToday||0) + 1;
+  setMainLog(`You hunted and gained ${gained} $PREY. Total: ${player.prey}${isBloodMoon() ? ' (Blood Moon!)' : ''}`);
+  playSound('s_hunt');
+  incrementQuests('hunt');
+  await savePlayer();
+  renderAll();
+});
+
+document.getElementById('trainBtn').addEventListener('click', async ()=>{
+  if(!player){ alert('Save profile first'); return; }
+  if((player.prey||0) < 20){ setMainLog('Not enough $PREY'); playSound('s_lose'); return; }
+  player.prey -= 20; player.strength = (player.strength||1) + 1; player.xp = (player.xp||0) + 8;
+  setMainLog(`You trained. Strength now ${player.strength}`);
+  playSound('s_train');
+  incrementQuests('train');
+  await savePlayer();
+  renderAll();
+});
+
+document.getElementById('pvpBtn').addEventListener('click', ()=> startPvp());
+
+document.getElementById('adBtn').addEventListener('click', ()=> showMonetagAd());
+
+document.getElementById('muteBtn').addEventListener('click', ()=>{
+  muted = !muted; document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+});
+
+/* ======== Quests & Codex logic ======== */
+function incrementQuests(action){
+  if(!state.quests) return;
+  let any = false;
+  state.quests.forEach(q=>{
+    if(q.done) return;
+    const t = q.text.toLowerCase();
+    if(action==='hunt' && t.includes('hunt')) q.progress = (q.progress||0)+1;
+    if(action==='train' && t.includes('train')) q.progress = (q.progress||0)+1;
+    if(action==='pvp' && t.includes('win')) q.progress = (q.progress||0)+1;
+    if(action==='relic' && t.includes('relic')) q.progress = player.inventory ? player.inventory.length : 0;
+    if(t.includes('collect') && player.prey >= q.goal) q.progress = q.goal;
+    if(q.progress >= q.goal && !q.done){
+      q.done = true;
+      player.prey = (player.prey||0) + (q.rewardPrey||25);
+      player.xp = (player.xp||0) + (q.rewardXp||20);
+      setMainLog(`Quest complete: ${q.text} (+${q.rewardPrey||25} $PREY)`);
+      any = true;
+    }
+  });
+  if(any) { saveLocal(); savePlayer(); }
+  renderQuests();
+}
+function completeQuest(i){
+  if(!state.quests||!state.quests[i]) return;
+  if(state.quests[i].done) return;
+  state.quests[i].done = true;
+  player.prey = (player.prey||0) + (state.quests[i].rewardPrey||25);
+  player.xp = (player.xp||0) + (state.quests[i].rewardXp||20);
+  setMainLog(`Quest "${state.quests[i].text}" completed.`);
+  saveLocal(); savePlayer(); renderQuests(); renderAll();
+}
+function unlockCodexEntry(){
+  if(!state.codex || state.codexUnlocked >= state.codex.length) return;
+  state.codexUnlocked++;
+  player.prey = (player.prey||0) + 15;
+  player.xp = (player.xp||0) + 10;
+  setMainLog('Codex unlocked: +15 $PREY +10 XP');
+  saveLocal(); savePlayer(); renderCodexBox();
+}
+
+/* ========= Shop & Inventory ========= */
+async function buyItem(name,cost){
+  if((player.prey||0) < cost){ document.getElementById('shopMsg').textContent = 'Not enough $PREY'; playSound('s_lose'); return; }
+  player.prey -= cost; player.inventory = player.inventory||[]; player.inventory.push(name);
+  document.getElementById('shopMsg').textContent = `Bought ${name}.`;
+  playSound('s_win'); incrementQuests('relic'); await savePlayer(); renderInventory(); renderQuests(); loadLeaderboard();
+}
+
+/* ========= PvP (pick random real player) ========= */
+async function startPvp(){
+  if(!player){ alert('Save profile first'); return; }
+  setMainLog('Searching for opponent...');
+  try{
+    let opponents = [];
+    if(firebaseAvailable){
+      const snap = await db.collection('players').get();
+      snap.forEach(d=>{ const p = d.data(); if(p.username !== player.username) opponents.push(p); });
+    } else {
+      const map = JSON.parse(localStorage.getItem(LOCAL_PLAYERS_KEY) || '{}');
+      opponents = Object.values(map).filter(p=>p.username !== player.username);
+    }
+    if(opponents.length === 0){ setMainLog('No opponents available'); return; }
+    const opp = opponents[Math.floor(Math.random()*opponents.length)];
+    const pRoll = Math.floor(Math.random()*20) + (player.strength||1);
+    const oRoll = Math.floor(Math.random()*20) + (opp.strength||1);
+    if(pRoll >= oRoll){
+      player.prey = (player.prey||0) + 20;
+      player.xp = (player.xp||0) + 12;
+      setMainLog(`Victory! You beat ${opp.username}. +20 $PREY`);
+      playSound('s_win');
+      incrementQuests('pvp');
+    } else {
+      const loss = Math.min(player.prey||0, Math.ceil(8 + Math.random()*18));
+      player.prey -= loss;
+      player.xp = (player.xp||0) + 4;
+      setMainLog(`Defeat... lost ${loss} $PREY to ${opp.username}.`);
+      playSound('s_lose');
+      incrementQuests('pvploss');
+    }
+    await savePlayer();
+    renderAll();
+  } catch(e){ console.warn(e); setMainLog('PvP error'); }
+}
+
+/* ========= Monetag / Ads ========= */
+function showMonetagAd(){
+  setMainLog('Loading ad...');
+  // If Monetag library exposes a show or similar API, attempt to call it.
+  try{
+    if(window.Monetag && typeof window.Monetag.showInterstitial === 'function'){
+      window.Monetag.showInterstitial({ zone: '9855091', onClose: async ()=>{ player.prey = (player.prey||0)+50; await savePlayer(); renderAll(); setMainLog('Ad finished: +50 $PREY'); playSound('s_ad'); }});
+      return;
+    }
+  }catch(e){ console.warn('monetag error', e); }
+  // fallback simulation
+  playSound('s_ad');
+  setTimeout(async ()=>{ player.prey = (player.prey||0)+50; await savePlayer(); renderAll(); setMainLog('Simulated ad done: +50 $PREY'); }, 2800);
+}
+
+/* ========= Leaderboard ========= */
+async function loadLeaderboard(){
+  const el = document.getElementById('leaderboardList'); el.innerHTML = '';
+  if(firebaseAvailable){
+    try{
+      const snap = await db.collection('players').orderBy('prey','desc').limit(20).get();
+      snap.forEach(d=>{ const p = d.data(); const li=document.createElement('li'); li.textContent = `${p.username} ${p.role==='wolf'?'🐺':'🏹'} — ${p.prey||0} $PREY (L${p.level||1} STR${p.strength||1})`; el.appendChild(li); });
+      return;
+    } catch(e){ console.warn('leader read failed', e); }
+  }
+  // fallback local
+  const map = JSON.parse(localStorage.getItem(LOCAL_PLAYERS_KEY) || '{}');
+  const arr = Object.values(map).sort((a,b)=> (b.prey||0)-(a.prey||0)).slice(0,20);
+  arr.forEach(p=>{ const li=document.createElement('li'); li.textContent = `${p.username} — ${p.prey||0} $PREY`; el.appendChild(li); });
+}
+
+/* ========= Save to Firestore + fallback ========= */
+async function savePlayer(){
+  saveLocal();
+  if(!player || !player.username) return;
+  if(firebaseAvailable){
+    try{
+      await db.collection('players').doc(player.username).set({
+        username: player.username,
+        role: player.role,
+        prey: player.prey,
+        strength: player.strength,
+        level: player.level,
+        xp: player.xp,
+        lastDay: player.lastDay || todayKey()
+      }, { merge:true });
+      return;
+    } catch(e){ console.warn('save firestore failed', e); }
+  }
+  const map = JSON.parse(localStorage.getItem(LOCAL_PLAYERS_KEY) || '{}');
+  map[player.username] = { username: player.username, role: player.role, prey: player.prey, strength: player.strength, level: player.level, updated: Date.now() };
+  localStorage.setItem(LOCAL_PLAYERS_KEY, JSON.stringify(map));
+}
+
+/* ========= Load backend/local on start ========= */
+(function boot(){
+  init();
+  // load local or show profile
+  const ok = loadLocal();
+  if(!ok || !player){
+    setMainLog('Please set up your profile (first time only).');
+    return;
+  }
+  initAfterProfile(); // show UI & sync
+})();
+
+/* ========= Expose some for debug ======== */
+window.savePlayer = savePlayer;
+window.renderAll = renderAll;
+window.unlockCodexEntry = unlockCodexEntry;
+window.completeQuest = completeQuest;
+window.loadLeaderboard = loadLeaderboard;
+window.showMonetagAd = showMonetagAd;
+</script>
 </body>
 </html>
